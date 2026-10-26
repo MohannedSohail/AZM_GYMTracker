@@ -1,0 +1,153 @@
+<resources>
+    <string name="app_name">عزم</string>
+    <string name="app_tagline">متتبع التمارين بدون إنترنت</string>
+
+    <!-- Navigation & Common -->
+    <string name="nav_dashboard">الرئيسية</string>
+    <string name="nav_exercises">التمارين</string>
+    <string name="nav_history">السجل</string>
+    <string name="nav_progress">التقدم</string>
+    <string name="status_offline">بدون إنترنت</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_confirm">تأكيد</string>
+    <string name="action_back">رجوع</string>
+    <string name="action_close">إغلاق</string>
+    <string name="action_done">✓ تم</string>
+    <string name="action_undo">تراجع</string>
+    <string name="toast_saved">تم الحفظ</string>
+    <string name="toast_deleted">تم حذف الجولة</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">مرحبًا بك في عزم</string>
+    <string name="onboarding_subtitle">أضف أول ملف شخصي لبدء تسجيل تمارينك بدون اتصال بالإنترنت.</string>
+    <string name="member_name_hint">اسم المتدرب</string>
+    <string name="member_color_label">اختر لون الملف الشخصي</string>
+    <string name="onboarding_create_button">ابدأ الآن</string>
+
+    <!-- Dashboard / Home (Figma #87:249) -->
+    <string name="hero_subtitle">عزم — سجّل جولتك</string>
+    <string name="hero_title">جاهز للجولة\nالتالية؟</string>
+    <string name="hero_description">هاتف واحد. أرقام واضحة. تمرينكم معًا.</string>
+    <string name="hero_start_button">ابدأ التمرين</string>
+    <string name="recent_sessions_title">آخر الجلسات</string>
+    <string name="recent_sessions_count">%1$d جلسات</string>
+    <string name="dashboard_active_profile">المتدرب الحالي</string>
+    <string name="dashboard_switch_member">تبديل</string>
+    <string name="dashboard_start_workout">ابدأ التمرين</string>
+    <string name="dashboard_resume_workout">استئناف التمرين الحالي</string>
+    <string name="dashboard_recent_workouts">آخر التمارين</string>
+    <string name="dashboard_no_recent_workouts">لم يتم تسجيل أي تمرين حتى الآن.</string>
+    <string name="dashboard_manage_members">إدارة المتدربين</string>
+    <string name="dashboard_add_member">إضافة متدرب جديد</string>
+
+    <!-- Participant Selection (Figma #87:346) -->
+    <string name="participants_title">من يتمرن اليوم؟</string>
+    <string name="participants_subtitle">اختر رفاق التمرين، ثم مرّروا الهاتف بينكم.</string>
+    <string name="participants_heading">المشاركون</string>
+    <string name="participants_count_badge">%1$d محددون</string>
+    <string name="participants_selected_badge">محدد للتمرين ✓</string>
+    <string name="participants_add_button">＋ إضافة مشارك</string>
+    <string name="participants_reassurance">أسماء وأرقام فقط، بدون حساب.</string>
+
+    <!-- Active Session (Figma #87:436) -->
+    <string name="session_active_title">تمرين حالي</string>
+    <string name="session_timer_label">مدة التمرين</string>
+    <string name="stepper_weight_label">الوزن · كجم</string>
+    <string name="stepper_reps_label">التكرارات</string>
+    <string name="last_round_hint">آخر جولة: %1$s</string>
+    <string name="session_add_exercise">＋ إضافة تمرين</string>
+    <string name="session_add_round">＋ إضافة جولة</string>
+    <string name="session_finish_button">إنهاء التمرين</string>
+    <string name="session_discard_button">إلغاء</string>
+    <string name="session_add_set">إضافة جولة</string>
+    <string name="session_set_number">الجولة %1$d</string>
+    <string name="session_reps_hint">عدات</string>
+    <string name="session_weight_hint">كغ</string>
+    <string name="session_bodyweight">وزن الجسم</string>
+    <string name="round_upcoming">قادمة</string>
+    <string name="session_finish_dialog_title">إنهاء التمرين؟</string>
+    <string name="session_finish_dialog_msg">سيُحفظ تمرينكم وتظهر نتائج كل مشارك.</string>
+    <string name="session_finish_and_save">إنهاء وحفظ</string>
+    <string name="session_pause_dialog_title">إيقاف مؤقت؟</string>
+    <string name="session_pause_dialog_msg">سيتوقف مؤقت الجلسة حتى تستأنفوا التمرين.</string>
+    <string name="session_pause_action">إيقاف مؤقت</string>
+    <string name="session_discard_dialog_title">إلغاء التمرين؟</string>
+    <string name="session_discard_dialog_msg">هل أنت متأكد من إلغاء هذا التمرين؟ سيتم حذف جميع الجولات المسجلة فيه.</string>
+    <string name="delete_round_dialog_title">حذف الجولة؟</string>
+    <string name="delete_round_dialog_msg">يمكنك التراجع بعد الحذف.</string>
+
+    <!-- Rest Timer Overlay (Figma #87:1880) -->
+    <string name="rest_timer_title">وقت الراحة</string>
+    <string name="action_skip">تخطي</string>
+    <string name="action_plus_15s">+15ث</string>
+    <string name="action_minus_15s">−15ث</string>
+
+    <!-- Workout Summary (Figma #87:550) -->
+    <string name="workout_summary_title">أحسنتم! أنهيتم التمرين</string>
+    <string name="total_volume_label">إجمالي الحجم</string>
+    <string name="unit_kg">كجم</string>
+    <string name="stats_sets">جولة</string>
+    <string name="stats_exercises">تمارين</string>
+    <string name="stats_minutes">دقيقة</string>
+    <string name="new_pr_badge">رقم قياسي جديد • %1$s • %2$s %3$s كجم</string>
+    <string name="action_return_home">العودة للرئيسية</string>
+    <string name="action_view_details">عرض التفاصيل</string>
+
+    <!-- Exercise Library (Figma #87:634) -->
+    <string name="exercises_library_title">كل التمارين</string>
+    <string name="search_exercise_hint">ابحث عن تمرين</string>
+    <string name="badge_video">فيديو</string>
+    <string name="badge_custom">مخصص</string>
+    <string name="custom_exercise_fab">＋ إضافة تمرين مخصص</string>
+    <string name="picker_title">اختر التمرين</string>
+    <string name="picker_search_hint">ابحث عن تمرين...</string>
+    <string name="picker_category_all">الكل</string>
+    <string name="picker_category_chest">الصدر</string>
+    <string name="picker_category_back">الظهر</string>
+    <string name="picker_category_legs">الأرجل</string>
+    <string name="picker_category_shoulders">الأكتاف</string>
+    <string name="picker_category_arms">الذراعين</string>
+    <string name="picker_category_core">البطن</string>
+    <string name="picker_category_cardio">كارديو</string>
+    <string name="picker_category_biceps">البايسبس</string>
+    <string name="picker_category_triceps">الترايسبس</string>
+    <string name="picker_category_forearms">السواعد</string>
+    <string name="picker_category_traps">الترابيس</string>
+    <string name="picker_create_custom">إنشاء تمرين مخصص</string>
+    <string name="picker_custom_name_hint">اسم التمرين</string>
+    <string name="picker_empty_search">لم يتم العثور على تمارين مطابقة.</string>
+
+    <!-- History (Figma #87:745) -->
+    <string name="history_title">سجل التمارين</string>
+    <string name="history_subtitle">كل جولة محفوظة، لكل مشارك.</string>
+    <string name="history_empty">لم تُسجّل أي جلسة بعد</string>
+    <string name="history_empty_subtitle">ابدأ تمرينًا لتظهر جولاتك هنا.</string>
+    <string name="history_total_volume">إجمالي الحجم: %1$s كغ</string>
+    <string name="history_exercise_sets">%1$d جولات</string>
+    <string name="history_delete_dialog_title">حذف التمرين؟</string>
+    <string name="history_delete_dialog_msg">هل أنت متأكد من حذف هذا التمرين نهائيًا من السجل؟</string>
+
+    <!-- Progress (Figma #87:859) -->
+    <string name="progress_title">تقدمك، جولة بجولة</string>
+    <string name="period_week">أسبوع</string>
+    <string name="period_month">شهر</string>
+    <string name="period_3months">3 أشهر</string>
+    <string name="period_all">الكل</string>
+    <string name="progress_stat_sets">جولة مكتملة</string>
+    <string name="progress_stat_month_sessions">جلسات هذا الشهر</string>
+    <string name="progress_stat_max_weight">أعلى وزن • كجم</string>
+    <string name="progress_stat_total_volume">إجمالي الحجم • كجم</string>
+    <string name="progress_bench_history">وزن البنش عبر الزمن</string>
+    <string name="progress_weekly_sessions">الجلسات الأسبوعية</string>
+    <string name="progress_empty_title">أول جولة، بداية تقدمك</string>
+    <string name="progress_empty_subtitle">ابدأ تمرينًا لتظهر إحصائياتك هنا.</string>
+
+    <!-- Validation & Errors -->
+    <string name="error_name_blank">لا يمكن أن يكون الاسم فارغًا</string>
+    <string name="error_name_too_long">يجب ألا يتجاوز الاسم 50 حرفًا</string>
+    <string name="error_duplicate_member">يوجد متدرب مسجل بهذا الاسم بالفعل</string>
+    <string name="error_reps_invalid">أدخل تكرارًا واحدًا على الأقل</string>
+    <string name="error_weight_invalid">أدخل وزنًا لا يقل عن 0.5 كجم</string>
+</resources>

@@ -6,29 +6,81 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Set of Material typography styles to start with
+// Arabic Thmanyah Sans typography scale from Figma (Node #29:1840)
+// With fallback to system Arabic typeface ensuring baseline integrity
+val ThmanyahSansFamily = FontFamily.Default
+
 val Typography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    )
-    /* Other default text styles to override
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
+    // 48 / أرقام العرض (Black 900)
+    displayLarge = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Black,
+        fontSize = 48.sp,
+        lineHeight = (48 * 1.4).sp,
         letterSpacing = 0.sp
     ),
-    labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
+    // 28 / عنوان رئيسي (Bold 700)
+    headlineLarge = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = (28 * 1.4).sp,
+        letterSpacing = 0.sp
+    ),
+    // 24 / أرقام وإحصائيات (Bold 700)
+    headlineMedium = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        lineHeight = (24 * 1.4).sp,
+        letterSpacing = 0.sp
+    ),
+    // 20 / عنوان فرعي (Bold 700)
+    titleLarge = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = (20 * 1.4).sp,
+        letterSpacing = 0.sp
+    ),
+    // 16 / نص أساسي وعناوين البطاقات (Bold 700)
+    titleMedium = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        lineHeight = (16 * 1.4).sp,
+        letterSpacing = 0.sp
+    ),
+    // 16 / نص أساسي (Regular 400)
+    bodyLarge = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = (16 * 1.4).sp,
+        letterSpacing = 0.sp
+    ),
+    // 14 / تسمية وإدخال (Medium 500)
+    bodyMedium = TextStyle(
+        fontFamily = ThmanyahSansFamily,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        fontSize = 14.sp,
+        lineHeight = (14 * 1.4).sp,
+        letterSpacing = 0.sp
+    ),
+    // 12 / توضيح وشارات (Regular 400)
+    bodySmall = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = (12 * 1.4).sp,
+        letterSpacing = 0.sp
+    ),
+    // 12 / شارات وتسميات مصغرة (Bold 700)
+    labelSmall = TextStyle(
+        fontFamily = ThmanyahSansFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        lineHeight = (12 * 1.4).sp,
+        letterSpacing = 0.sp
     )
-    */
 )
