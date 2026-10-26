@@ -75,14 +75,16 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     uiState: HistoryUiState,
-    onSelectSession: (WorkoutSession?) -> Unit,
+    onSelectMemberFilter: (Long?) -> Unit = {},
+    onToggleSessionExpanded: (Long) -> Unit = {},
+    onSelectSession: (WorkoutSession?) -> Unit = {},
     onDeleteSession: (sessionId: Long) -> Unit,
     onNavigateBack: () -> Unit,
     onTabSelected: (AzmNavTab) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var sessionToDelete by remember { mutableStateOf<Long?>(null) }
-    var isExpandedFirstSession by remember { mutableStateOf(true) }
+    val dateFormat = remember { SimpleDateFormat("EEEE، d MMMM", Locale.forLanguageTag("ar")) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -103,7 +105,7 @@ fun HistoryScreen(
         ) {
             // Heading: "سجل التمارين" + "كل جولة محفوظة، لكل مشارك."
             item {
-                Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
+                Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.history_title),
                         style = MaterialTheme.typography.headlineLarge,
@@ -119,22 +121,79 @@ fun HistoryScreen(
                 }
             }
 
-            // Participants filter chips (Figma Node #87:768)
+            // Participants filter chips (Dynamic from uiState.members)
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
                 ) {
-                    HistoryParticipantChip(name = "سلمان ✓", char = "س", color = MemberColorIndigo)
-                    HistoryParticipantChip(name = "محمد ✓", char = "م", color = MemberColorGold)
-                    HistoryParticipantChip(name = "أحمد ✓", char = "أ", color = AzmEmeraldGreen)
+                    HistoryParticipantChip(
+                        name = stringResource(R.string.picker_category_all),
+                        char = "★",
+                        color = AzmEmeraldGreen,
+                        isSelected = uiState.selectedMemberId == null,
+                        onClick = { onSelectMemberFilter(null) },
+                    )
+
+                    uiState.members.forEach { member ->
+                        val isSelected = uiState.selectedMemberId == member.id
+                        HistoryParticipantChip(
+                            name = member.name,
+                            char = member.name.take(1),
+                            color = parseMemberColor(member.colorHex),
+                            isSelected = isSelected,
+                            onClick = {
+                                onSelectMemberFilter(if (isSelected) null else member.id)
+                            },
+                        )
+                    }
                 }
             }
 
-            // Expanded Session Card (Figma Node #87:785)
-            item {
+            // Loading State
+            if (uiState.isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(color = AzmEmeraldGreen)
+                    }
+                }
+            }
+
+            // Dynamic Session Cards
+            items(uiState.sessionsWithDetails, key = { it.session.id }) { item ->
+                val session = item.session
+                val participants = item.participants
+                val exercises = item.exercises
+                val isExpanded = uiState.expandedSessionIds.contains(session.id)
+
+                val durationMinutes = if (session.endedAt != null) {
+                    maxOf(1, ((session.endedAt - session.startedAt - session.pausedTotalMs) / 60000).toInt())
+                } else {
+                    0
+                }
+
+                val totalSets = exercises.sumOf { it.sets.size }
+                val totalVolume = exercises.sumOf { ex ->
+                    ex.sets.sumOf { s -> (s.weightKg ?: 0f).toDouble() * s.reps }
+                }
+
+                val dateText = remember(session.startedAt) {
+                    try {
+                        dateFormat.format(Date(session.startedAt))
+                    } catch (e: Exception) {
+                        ""
+                    }
+                }
+
+                val volumeFormatted = String.format(Locale.US, "%,d", totalVolume.toInt())
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -143,43 +202,69 @@ fun HistoryScreen(
                         .border(1.dp, AzmBorderSubtle, RoundedCornerShape(24.dp))
                         .padding(16.dp),
                 ) {
-                    // Header row with toggle arrow
+                    // Header row with date (Start) & toggle arrow / delete (End)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { isExpandedFirstSession = !isExpandedFirstSession },
+                            .clickable { onToggleSessionExpanded(session.id) },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            imageVector = if (isExpandedFirstSession) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = null,
-                            tint = AzmDarkOnSurfaceMuted,
-                        )
                         Text(
-                            text = "اليوم، 22 أكتوبر",
+                            text = dateText,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = AzmDarkOnSurface,
                         )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = AzmDarkOnSurfaceMuted,
+                            )
+                            androidx.compose.material3.IconButton(
+                                onClick = { sessionToDelete = session.id },
+                                modifier = Modifier.size(28.dp),
+                            ) {
+                                Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Default.DateRange,
+                                    contentDescription = stringResource(R.string.action_delete),
+                                    tint = AzmDarkOnSurfaceMuted,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "42:18 دقيقة • 3 تمارين • 18 جولة",
+                        text = "$durationMinutes دقيقة • ${exercises.size} تمارين • $totalSets جولة",
                         style = MaterialTheme.typography.bodySmall,
                         color = AzmDarkOnSurfaceMuted,
-                        modifier = Modifier.align(Alignment.End),
+                        modifier = Modifier.align(Alignment.Start),
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Volume & Participants Row
+                    // Volume (Start) & Participants (End) Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                            Text(
+                                text = "$volumeFormatted kg",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = AzmEmeraldGreen,
+                            )
+                        }
+
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -187,21 +272,14 @@ fun HistoryScreen(
                                 .padding(horizontal = 10.dp, vertical = 4.dp),
                         ) {
                             Text(
-                                text = "3 مشاركين",
+                                text = "${participants.size} مشاركين",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AzmEmeraldGreen,
                             )
                         }
-
-                        Text(
-                            text = "8,640 كجم",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = AzmEmeraldGreen,
-                        )
                     }
 
-                    if (isExpandedFirstSession) {
+                    if (isExpanded) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Box(
                             modifier = Modifier
@@ -211,60 +289,67 @@ fun HistoryScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Exercise Section Title
-                        Text(
-                            text = "بنش برس بالبار مستوي",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = AzmDarkOnSurface,
-                            modifier = Modifier.align(Alignment.End),
-                        )
+                        exercises.forEach { exWithSets ->
+                            val exName = exWithSets.catalogExercise.nameAr.ifBlank {
+                                exWithSets.workoutExercise.exerciseNameSnapshot
+                            }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = exName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AzmDarkOnSurface,
+                                modifier = Modifier.align(Alignment.Start),
+                            )
 
-                        // Table Column Headings (المشارك | الجولة | كجم | التكرارات)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text("المشارك", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
-                            Text("الجولة", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
-                            Text("كجم", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
-                            Text("التكرارات", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Table Column Headings (المشارك | الجولة | كجم | التكرارات)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text("المشارك", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
+                                Text("الجولة", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
+                                Text("كجم", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
+                                Text("التكرارات", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            exWithSets.sets.forEach { set ->
+                                val pName = participants.firstOrNull { it.id == set.memberId }?.name ?: ""
+                                val kgStr = if (set.weightKg != null) {
+                                    if (set.weightKg % 1f == 0f) "${set.weightKg.toInt()}" else "${set.weightKg}"
+                                } else "-"
+
+                                SavedRoundRow(
+                                    participant = pName,
+                                    round = "${set.setNumber}",
+                                    kg = kgStr,
+                                    reps = "${set.reps}",
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Set Rows in Table
-                        SavedRoundRow(participant = "أحمد", round = "1", kg = "72.5", reps = "8")
-                        SavedRoundRow(participant = "محمد", round = "1", kg = "60", reps = "8")
-                        SavedRoundRow(participant = "سلمان", round = "1", kg = "52.5", reps = "8")
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "عرض 3 من 18 جولة • عرض كل التفاصيل",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = AzmDarkOnSurfaceMuted,
-                            modifier = Modifier.align(Alignment.End),
-                        )
+                        // Delete Session Action Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                        ) {
+                            TextButton(onClick = { sessionToDelete = session.id }) {
+                                Text(
+                                    text = stringResource(R.string.action_delete),
+                                    color = AzmError,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
                     }
                 }
-            }
-
-            // Previous Sessions Cards
-            item {
-                HistoryCompactSessionCard(
-                    date = "الثلاثاء، 20 أكتوبر",
-                    metadata = "38:40 دقيقة • 3 مشاركين • 7,920 كجم",
-                )
-            }
-
-            item {
-                HistoryCompactSessionCard(
-                    date = "الأحد، 18 أكتوبر",
-                    metadata = "40:12 دقيقة • 7,200 كجم • السجل محفوظ",
-                    badge = "خالد • مؤرشف",
-                )
             }
 
             // If empty
@@ -343,27 +428,30 @@ private fun HistoryParticipantChip(
     name: String,
     char: String,
     color: androidx.compose.ui.graphics.Color,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(AzmDarkSurfaceSelected)
-            .border(1.dp, AzmEmeraldGreen, CircleShape)
+            .background(if (isSelected) AzmDarkSurfaceSelected else AzmDarkSurface)
+            .border(1.dp, if (isSelected) AzmEmeraldGreen else AzmBorderSubtle, CircleShape)
+            .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = AzmDarkOnSurface,
-        )
         ParticipantAvatarBox(
             character = char,
             backgroundColor = color,
             size = 26.dp,
             fontSize = 14,
+        )
+        Text(
+            text = if (isSelected) "$name ✓" else name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) AzmDarkOnSurface else AzmDarkOnSurfaceMuted,
         )
     }
 }
@@ -389,6 +477,8 @@ private fun SavedRoundRow(
         Text(round, style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface, modifier = Modifier.weight(1f))
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Text(kg, style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface, modifier = Modifier.weight(1f))
+        }
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Text(reps, style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface, modifier = Modifier.weight(1f))
         }
     }
@@ -411,18 +501,27 @@ private fun HistoryCompactSessionCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-            contentDescription = null,
-            tint = AzmDarkOnSurfaceMuted,
-            modifier = Modifier.size(18.dp),
-        )
-
+        // Start side / Right in RTL: Calendar icon + Date & Metadata
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(horizontalAlignment = Alignment.End) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(AzmDarkBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = null,
+                    tint = AzmEmeraldGreen,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.Start) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -456,21 +555,14 @@ private fun HistoryCompactSessionCard(
                     color = AzmDarkOnSurfaceMuted,
                 )
             }
-
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(AzmDarkBackground),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = null,
-                    tint = AzmEmeraldGreen,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
         }
+
+        // End side / Left in RTL: Chevron
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            contentDescription = null,
+            tint = AzmDarkOnSurfaceMuted,
+            modifier = Modifier.size(18.dp),
+        )
     }
 }

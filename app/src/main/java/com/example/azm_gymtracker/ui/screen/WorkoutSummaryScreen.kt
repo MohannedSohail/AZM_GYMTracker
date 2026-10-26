@@ -130,14 +130,14 @@ fun WorkoutSummaryScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Session Statistics Cards (3 cards in row)
+            // Session Statistics Cards (3 cards in row: Duration on Start, Exercises in Center, Sets on End in RTL)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StatCard(
-                    value = "$totalSets",
-                    label = stringResource(R.string.stats_sets),
+                    value = durationFormatted,
+                    label = stringResource(R.string.stats_minutes),
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
@@ -146,8 +146,8 @@ fun WorkoutSummaryScreen(
                     modifier = Modifier.weight(1f),
                 )
                 StatCard(
-                    value = durationFormatted,
-                    label = stringResource(R.string.stats_minutes),
+                    value = "$totalSets",
+                    label = stringResource(R.string.stats_sets),
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -254,8 +254,27 @@ private fun ParticipantResultCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Left side: Volume & sets count
-        Column(horizontalAlignment = Alignment.Start) {
+        // Start side / Right in RTL: Avatar & Name
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            ParticipantAvatarBox(
+                character = item.name,
+                backgroundColor = memberColor,
+                size = 40.dp,
+                fontSize = 20,
+            )
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = AzmDarkOnSurface,
+            )
+        }
+
+        // End side / Left in RTL: Volume & sets count
+        Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "$formattedVol كجم",
                 style = MaterialTheme.typography.titleLarge,
@@ -266,25 +285,6 @@ private fun ParticipantResultCard(
                 text = "${item.totalSets} جولات",
                 style = MaterialTheme.typography.bodySmall,
                 color = AzmDarkOnSurfaceMuted,
-            )
-        }
-
-        // Right side: Name & Avatar
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = item.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
-            )
-            ParticipantAvatarBox(
-                character = item.name,
-                backgroundColor = memberColor,
-                size = 40.dp,
-                fontSize = 20,
             )
         }
     }

@@ -11,6 +11,7 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
     <string name="action_confirm">Confirm</string>
     <string name="action_back">Back</string>
     <string name="action_close">Close</string>
@@ -119,6 +120,9 @@
     <string name="picker_category_traps">Traps</string>
     <string name="picker_create_custom">Create Custom Exercise</string>
     <string name="picker_custom_name_hint">Exercise name</string>
+    <string name="exercise_name_ar">Arabic Name</string>
+    <string name="exercise_name_en">English Name (Optional)</string>
+    <string name="exercise_category_label">Muscle Group</string>
     <string name="picker_empty_search">No exercises found.</string>
 
     <!-- History (Figma #87:745) -->

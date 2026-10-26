@@ -1,5 +1,7 @@
 package com.example.azm_gymtracker.ui.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,12 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +53,26 @@ import androidx.compose.ui.unit.sp
 import com.example.azm_gymtracker.R
 import com.example.azm_gymtracker.domain.model.Exercise
 import com.example.azm_gymtracker.domain.model.MuscleCategory
+import com.example.azm_gymtracker.ui.theme.AzmBorderSubtle
+import com.example.azm_gymtracker.ui.theme.AzmDarkBackground
+import com.example.azm_gymtracker.ui.theme.AzmDarkOnSurface
+import com.example.azm_gymtracker.ui.theme.AzmDarkOnSurfaceMuted
+import com.example.azm_gymtracker.ui.theme.AzmDarkSurface
+import com.example.azm_gymtracker.ui.theme.AzmDarkSurfaceSelected
+import com.example.azm_gymtracker.ui.theme.AzmDarkSurfaceVariant
+import com.example.azm_gymtracker.ui.theme.AzmEmeraldGreen
+
+@Composable
+private fun categoryDisplayName(category: MuscleCategory): String = when (category) {
+    MuscleCategory.CHEST -> stringResource(R.string.picker_category_chest)
+    MuscleCategory.BACK -> stringResource(R.string.picker_category_back)
+    MuscleCategory.LEGS -> stringResource(R.string.picker_category_legs)
+    MuscleCategory.SHOULDERS -> stringResource(R.string.picker_category_shoulders)
+    MuscleCategory.ARMS -> stringResource(R.string.picker_category_arms)
+    MuscleCategory.CORE -> stringResource(R.string.picker_category_core)
+    MuscleCategory.CARDIO -> stringResource(R.string.picker_category_cardio)
+    MuscleCategory.OTHER -> stringResource(R.string.picker_category_all)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +101,7 @@ fun ExercisePickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = AzmDarkBackground,
         modifier = modifier.fillMaxHeight(0.9f),
     ) {
         Column(
@@ -95,7 +119,7 @@ fun ExercisePickerSheet(
                     text = stringResource(R.string.picker_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = AzmDarkOnSurface,
                 )
                 IconButton(
                     onClick = { showCustomDialog = true },
@@ -104,7 +128,7 @@ fun ExercisePickerSheet(
                     Icon(
                         Icons.Default.Add,
                         contentDescription = stringResource(R.string.picker_create_custom),
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = AzmEmeraldGreen,
                     )
                 }
             }
@@ -115,16 +139,29 @@ fun ExercisePickerSheet(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text(stringResource(R.string.picker_search_hint)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.picker_search_hint),
+                        color = AzmDarkOnSurfaceMuted,
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = AzmDarkOnSurfaceMuted,
+                    )
+                },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedContainerColor = AzmDarkSurface,
+                    unfocusedContainerColor = AzmDarkSurface,
+                    focusedBorderColor = AzmEmeraldGreen,
+                    unfocusedBorderColor = AzmBorderSubtle,
+                    focusedTextColor = AzmDarkOnSurface,
+                    unfocusedTextColor = AzmDarkOnSurface,
                 ),
             )
 
@@ -140,34 +177,37 @@ fun ExercisePickerSheet(
                         onClick = { selectedCategory = null },
                         label = { Text(stringResource(R.string.picker_category_all)) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            selectedContainerColor = AzmEmeraldGreen,
+                            selectedLabelColor = AzmDarkBackground,
+                            containerColor = AzmDarkSurface,
+                            labelColor = AzmDarkOnSurfaceMuted,
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (selectedCategory == null) AzmEmeraldGreen else AzmBorderSubtle,
+                            selectedBorderColor = AzmEmeraldGreen,
+                            enabled = true,
+                            selected = selectedCategory == null,
                         ),
                     )
                 }
                 items(MuscleCategory.entries.toTypedArray()) { cat ->
                     val isSelected = selectedCategory == cat
-                    val catName = when (cat) {
-                        MuscleCategory.CHEST -> stringResource(R.string.picker_category_chest)
-                        MuscleCategory.BACK -> stringResource(R.string.picker_category_back)
-                        MuscleCategory.LEGS -> stringResource(R.string.picker_category_legs)
-                        MuscleCategory.SHOULDERS -> stringResource(R.string.picker_category_shoulders)
-                        MuscleCategory.ARMS -> stringResource(R.string.picker_category_arms)
-                        MuscleCategory.CORE -> stringResource(R.string.picker_category_core)
-                        MuscleCategory.CARDIO -> stringResource(R.string.picker_category_cardio)
-                        MuscleCategory.OTHER -> stringResource(R.string.picker_category_all)
-                    }
+                    val catName = categoryDisplayName(cat)
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedCategory = if (isSelected) null else cat },
                         label = { Text(catName) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            selectedContainerColor = AzmEmeraldGreen,
+                            selectedLabelColor = AzmDarkBackground,
+                            containerColor = AzmDarkSurface,
+                            labelColor = AzmDarkOnSurfaceMuted,
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            borderColor = if (isSelected) AzmEmeraldGreen else AzmBorderSubtle,
+                            selectedBorderColor = AzmEmeraldGreen,
+                            enabled = true,
+                            selected = isSelected,
                         ),
                     )
                 }
@@ -186,7 +226,7 @@ fun ExercisePickerSheet(
                     Text(
                         text = stringResource(R.string.picker_empty_search),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = AzmDarkOnSurfaceMuted,
                     )
                 }
             } else {
@@ -200,9 +240,10 @@ fun ExercisePickerSheet(
                                 .fillMaxWidth()
                                 .height(64.dp)
                                 .clip(RoundedCornerShape(14.dp))
+                                .border(1.dp, AzmBorderSubtle, RoundedCornerShape(14.dp))
                                 .clickable { onSelectExercise(exercise) },
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
+                                containerColor = AzmDarkSurface,
                             ),
                         ) {
                             Row(
@@ -218,21 +259,42 @@ fun ExercisePickerSheet(
                                         text = exercise.nameAr,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = AzmDarkOnSurface,
                                     )
                                     Text(
                                         text = exercise.nameEn,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = AzmDarkOnSurfaceMuted,
                                     )
                                 }
 
-                                Text(
-                                    text = exercise.category.name,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    if (exercise.isCustom) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(CircleShape)
+                                                .background(AzmDarkSurfaceVariant)
+                                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.badge_custom),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = AzmEmeraldGreen,
+                                                fontSize = 10.sp,
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = categoryDisplayName(exercise.category),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AzmDarkOnSurfaceMuted,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
                             }
                         }
                     }
@@ -248,11 +310,12 @@ fun ExercisePickerSheet(
 
         AlertDialog(
             onDismissRequest = { showCustomDialog = false },
+            containerColor = AzmDarkSurface,
             title = {
                 Text(
                     text = stringResource(R.string.picker_create_custom),
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = AzmDarkOnSurface,
                 )
             },
             text = {
@@ -265,15 +328,17 @@ fun ExercisePickerSheet(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedBorderColor = AzmEmeraldGreen,
+                            unfocusedBorderColor = AzmBorderSubtle,
+                            focusedTextColor = AzmDarkOnSurface,
+                            unfocusedTextColor = AzmDarkOnSurface,
                         ),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = stringResource(R.string.member_color_label),
+                        text = stringResource(R.string.exercise_category_label),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = AzmDarkOnSurfaceMuted,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -281,10 +346,12 @@ fun ExercisePickerSheet(
                             FilterChip(
                                 selected = customCategory == cat,
                                 onClick = { customCategory = cat },
-                                label = { Text(cat.name, fontSize = 12.sp) },
+                                label = { Text(categoryDisplayName(cat), fontSize = 12.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                    selectedContainerColor = AzmEmeraldGreen,
+                                    selectedLabelColor = AzmDarkBackground,
+                                    containerColor = AzmDarkSurfaceVariant,
+                                    labelColor = AzmDarkOnSurfaceMuted,
                                 ),
                             )
                         }
@@ -300,13 +367,17 @@ fun ExercisePickerSheet(
                         }
                     },
                     shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AzmEmeraldGreen,
+                        contentColor = AzmDarkBackground,
+                    ),
                 ) {
-                    Text(stringResource(R.string.action_save))
+                    Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCustomDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
+                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
                 }
             },
         )

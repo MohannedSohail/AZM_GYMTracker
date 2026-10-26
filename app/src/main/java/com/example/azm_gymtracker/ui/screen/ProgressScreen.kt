@@ -54,9 +54,8 @@ import com.example.azm_gymtracker.ui.theme.AzmEmeraldGreen
 import com.example.azm_gymtracker.ui.theme.AzmNeonGreen
 import com.example.azm_gymtracker.ui.theme.MemberColorGold
 
-enum class TimePeriod {
-    WEEK, MONTH, THREE_MONTHS, ALL
-}
+import com.example.azm_gymtracker.presentation.progress.ProgressPeriod
+import com.example.azm_gymtracker.presentation.progress.ProgressUiState
 
 /**
  * Progress & Analytics Screen (Figma Node #87:859 "التقدم")
@@ -64,14 +63,12 @@ enum class TimePeriod {
  */
 @Composable
 fun ProgressScreen(
-    members: List<Member>,
-    activeMember: Member?,
+    uiState: ProgressUiState,
     onSelectMember: (Member) -> Unit,
+    onPeriodSelected: (ProgressPeriod) -> Unit,
     onTabSelected: (AzmNavTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedPeriod by remember { mutableStateOf(TimePeriod.MONTH) }
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = AzmDarkBackground,
@@ -104,10 +101,10 @@ fun ProgressScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
                 ) {
-                    members.forEach { member ->
-                        val isSelected = activeMember?.id == member.id
+                    uiState.members.forEach { member ->
+                        val isSelected = uiState.activeMember?.id == member.id
                         val memberColor = parseMemberColor(member.colorHex)
 
                         Row(
@@ -153,27 +150,27 @@ fun ProgressScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     PeriodOption(
-                        label = stringResource(R.string.period_all),
-                        isSelected = selectedPeriod == TimePeriod.ALL,
-                        onClick = { selectedPeriod = TimePeriod.ALL },
-                        modifier = Modifier.weight(1f),
-                    )
-                    PeriodOption(
-                        label = stringResource(R.string.period_3months),
-                        isSelected = selectedPeriod == TimePeriod.THREE_MONTHS,
-                        onClick = { selectedPeriod = TimePeriod.THREE_MONTHS },
+                        label = stringResource(R.string.period_week),
+                        isSelected = uiState.selectedPeriod == ProgressPeriod.WEEK,
+                        onClick = { onPeriodSelected(ProgressPeriod.WEEK) },
                         modifier = Modifier.weight(1f),
                     )
                     PeriodOption(
                         label = stringResource(R.string.period_month),
-                        isSelected = selectedPeriod == TimePeriod.MONTH,
-                        onClick = { selectedPeriod = TimePeriod.MONTH },
+                        isSelected = uiState.selectedPeriod == ProgressPeriod.MONTH,
+                        onClick = { onPeriodSelected(ProgressPeriod.MONTH) },
                         modifier = Modifier.weight(1f),
                     )
                     PeriodOption(
-                        label = stringResource(R.string.period_week),
-                        isSelected = selectedPeriod == TimePeriod.WEEK,
-                        onClick = { selectedPeriod = TimePeriod.WEEK },
+                        label = stringResource(R.string.period_3months),
+                        isSelected = uiState.selectedPeriod == ProgressPeriod.THREE_MONTHS,
+                        onClick = { onPeriodSelected(ProgressPeriod.THREE_MONTHS) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    PeriodOption(
+                        label = stringResource(R.string.period_all),
+                        isSelected = uiState.selectedPeriod == ProgressPeriod.ALL,
+                        onClick = { onPeriodSelected(ProgressPeriod.ALL) },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -187,13 +184,13 @@ fun ProgressScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         ProgressStatCard(
-                            value = "24",
-                            label = stringResource(R.string.progress_stat_sets),
+                            value = "${uiState.sessionsCount}",
+                            label = stringResource(R.string.progress_stat_month_sessions),
                             modifier = Modifier.weight(1f),
                         )
                         ProgressStatCard(
-                            value = "8",
-                            label = stringResource(R.string.progress_stat_month_sessions),
+                            value = "${uiState.setsCount}",
+                            label = stringResource(R.string.progress_stat_sets),
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -201,21 +198,28 @@ fun ProgressScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        val maxWeightStr = if (uiState.maxWeightKg % 1f == 0f) {
+                            "${uiState.maxWeightKg.toInt()}"
+                        } else {
+                            "${uiState.maxWeightKg}"
+                        }
+                        val volumeFormatted = String.format(java.util.Locale.US, "%,d", uiState.totalVolumeKg.toInt())
+
                         ProgressStatCard(
-                            value = "72.5",
-                            label = stringResource(R.string.progress_stat_max_weight),
+                            value = volumeFormatted,
+                            label = stringResource(R.string.progress_stat_total_volume),
                             modifier = Modifier.weight(1f),
                         )
                         ProgressStatCard(
-                            value = "12,960",
-                            label = stringResource(R.string.progress_stat_total_volume),
+                            value = maxWeightStr,
+                            label = stringResource(R.string.progress_stat_max_weight),
                             modifier = Modifier.weight(1f),
                         )
                     }
                 }
             }
 
-            // Line Graph Card: Bench weight over time (Figma Node #87:930)
+            // Line Graph Card: Weight Progression over time (Figma Node #87:930)
             item {
                 Column(
                     modifier = Modifier
@@ -230,6 +234,21 @@ fun ProgressScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        Text(
+                            text = stringResource(R.string.progress_bench_history),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AzmDarkOnSurface,
+                        )
+
+                        val deltaSign = if (uiState.weightDeltaKg >= 0) "+" else ""
+                        val deltaVal = if (uiState.weightDeltaKg % 1f == 0f) {
+                            uiState.weightDeltaKg.toInt().toString()
+                        } else {
+                            uiState.weightDeltaKg.toString()
+                        }
+                        val deltaText = if (uiState.weightDeltaKg != 0f) "$deltaSign$deltaVal kg" else "—"
+
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -237,22 +256,20 @@ fun ProgressScreen(
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
                         ) {
                             Text(
-                                text = "+12.5 كجم",
+                                text = deltaText,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AzmEmeraldGreen,
+                                color = if (uiState.weightDeltaKg >= 0) AzmEmeraldGreen else AzmDarkOnSurfaceMuted,
                                 fontWeight = FontWeight.Bold,
                             )
                         }
-
-                        Text(
-                            text = stringResource(R.string.progress_bench_history),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = AzmDarkOnSurface,
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    val points = uiState.weightProgressionPoints
+                    val minWeight = if (points.isNotEmpty()) points.minOf { it.weightKg } else 0f
+                    val maxWeight = if (points.isNotEmpty()) points.maxOf { it.weightKg } else 0f
+                    val weightSpan = if (maxWeight > minWeight) maxWeight - minWeight else 1f
 
                     // Line Graph Canvas
                     Row(
@@ -266,9 +283,21 @@ fun ProgressScreen(
                             modifier = Modifier.padding(end = 8.dp),
                             verticalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text("75", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
-                            Text("65", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
-                            Text("55", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
+                            Text(
+                                text = if (maxWeight > 0) "${maxWeight.toInt()}" else "-",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AzmDarkOnSurfaceMuted,
+                            )
+                            Text(
+                                text = if (maxWeight > minWeight) "${((maxWeight + minWeight) / 2).toInt()}" else "-",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AzmDarkOnSurfaceMuted,
+                            )
+                            Text(
+                                text = if (minWeight > 0) "${minWeight.toInt()}" else "-",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AzmDarkOnSurfaceMuted,
+                            )
                         }
 
                         Canvas(modifier = Modifier.weight(1f).height(88.dp)) {
@@ -280,35 +309,33 @@ fun ProgressScreen(
                             drawLine(AzmBorderSubtle, Offset(0f, h / 2f), Offset(w, h / 2f), strokeWidth = 1f)
                             drawLine(AzmBorderSubtle, Offset(0f, h), Offset(w, h), strokeWidth = 1f)
 
-                            // Trend curve points: 60kg -> 65kg -> 67.5kg -> 72.5kg
-                            val path = Path().apply {
-                                moveTo(0f, h * 0.75f)
-                                lineTo(w * 0.33f, h * 0.50f)
-                                lineTo(w * 0.66f, h * 0.38f)
-                                lineTo(w, h * 0.12f)
+                            if (points.size >= 2) {
+                                val path = Path()
+                                points.forEachIndexed { index, pt ->
+                                    val x = (index.toFloat() / (points.size - 1)) * w
+                                    val normalizedY = (pt.weightKg - minWeight) / weightSpan
+                                    val y = h - (normalizedY * (h * 0.8f) + h * 0.1f)
+                                    if (index == 0) {
+                                        path.moveTo(x, y)
+                                    } else {
+                                        path.lineTo(x, y)
+                                    }
+                                }
+                                drawPath(
+                                    path = path,
+                                    color = AzmEmeraldGreen,
+                                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
+                                )
+
+                                val lastPt = points.last()
+                                val lastNormalizedY = (lastPt.weightKg - minWeight) / weightSpan
+                                val lastY = h - (lastNormalizedY * (h * 0.8f) + h * 0.1f)
+                                drawCircle(AzmNeonGreen, radius = 5.dp.toPx(), center = Offset(w, lastY))
+                            } else if (points.size == 1) {
+                                val y = h / 2f
+                                drawCircle(AzmNeonGreen, radius = 5.dp.toPx(), center = Offset(w / 2f, y))
                             }
-                            drawPath(
-                                path = path,
-                                color = AzmEmeraldGreen,
-                                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
-                            )
-
-                            // End point circle
-                            drawCircle(AzmNeonGreen, radius = 5.dp.toPx(), center = Offset(w, h * 0.12f))
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Date labels under graph
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text("1 أكتوبر", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
-                        Text("8 أكتوبر", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
-                        Text("15 أكتوبر", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
-                        Text("22 أكتوبر", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
                     }
                 }
             }
@@ -332,6 +359,9 @@ fun ProgressScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    val maxSessionDay = (uiState.weeklySessionsCount.maxOrNull() ?: 1).coerceAtLeast(1)
+                    val daysLabels = listOf("أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت")
+
                     // Bar Chart Row
                     Row(
                         modifier = Modifier
@@ -340,46 +370,55 @@ fun ProgressScreen(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.Bottom,
                     ) {
-                        WeeklyBar(count = 1, barHeight = 16.dp, label = "1–7")
-                        WeeklyBar(count = 2, barHeight = 32.dp, label = "8–14")
-                        WeeklyBar(count = 2, barHeight = 32.dp, label = "15–21")
-                        WeeklyBar(count = 3, barHeight = 48.dp, label = "22–28", isCurrent = true)
+                        uiState.weeklySessionsCount.take(7).forEachIndexed { index, count ->
+                            val heightFraction = (count.toFloat() / maxSessionDay).coerceIn(0.15f, 1f)
+                            val barHeightDp = (heightFraction * 48).dp
+                            val label = daysLabels.getOrElse(index) { "$index" }
+                            WeeklyBar(
+                                count = count,
+                                barHeight = barHeightDp,
+                                label = label,
+                                isCurrent = index == 6,
+                            )
+                        }
                     }
                 }
             }
 
             // Personal Record List Item (Figma Node #87:987)
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(AzmDarkSurface)
-                        .border(1.dp, AzmBorderSubtle, RoundedCornerShape(16.dp))
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
+            if (uiState.maxWeightKg > 0f) {
+                item {
+                    Row(
                         modifier = Modifier
-                            .clip(CircleShape)
-                            .background(AzmDarkSurfaceVariant)
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(AzmDarkSurface)
+                            .border(1.dp, AzmBorderSubtle, RoundedCornerShape(16.dp))
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "72.5 كجم",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MemberColorGold,
-                            fontWeight = FontWeight.Bold,
+                            text = "${uiState.activeMember?.name ?: ""} • أعلى وزن مسجل",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AzmDarkOnSurface,
+                            fontWeight = FontWeight.Medium,
                         )
-                    }
 
-                    Text(
-                        text = "رقم قياسي • بنش برس بالبار",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AzmDarkOnSurface,
-                        fontWeight = FontWeight.Medium,
-                    )
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(AzmDarkSurfaceVariant)
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                text = "${uiState.maxWeightKg} كجم",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MemberColorGold,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
                 }
             }
 

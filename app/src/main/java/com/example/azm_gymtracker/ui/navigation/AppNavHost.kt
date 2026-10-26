@@ -23,8 +23,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.azm_gymtracker.AppContainer
 import com.example.azm_gymtracker.presentation.dashboard.DashboardViewModel
+import com.example.azm_gymtracker.presentation.exercises.ExercisesViewModel
 import com.example.azm_gymtracker.presentation.history.HistoryViewModel
 import com.example.azm_gymtracker.presentation.member.MemberViewModel
+import com.example.azm_gymtracker.presentation.progress.ProgressViewModel
 import com.example.azm_gymtracker.presentation.session.ActiveSessionViewModel
 import com.example.azm_gymtracker.presentation.summary.SummaryViewModel
 import com.example.azm_gymtracker.ui.component.AzmNavTab
@@ -315,13 +317,22 @@ fun AppNavHost(
         composable(
             route = NavRoutes.Exercises.route,
         ) {
-            val exercisesFlow = remember { container.exerciseRepository.getAllExercises() }
-            val exercises by exercisesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+            val exercisesViewModel: ExercisesViewModel = viewModel(
+                factory = ExercisesViewModel.Factory(container.exerciseRepository)
+            )
+            val exercisesState by exercisesViewModel.uiState.collectAsStateWithLifecycle()
 
             ExercisesScreen(
-                exercises = exercises,
+                exercises = exercisesState.exercises,
                 onSelectExercise = { /* View exercise details */ },
-                onCreateCustomExercise = { /* Add custom exercise */ },
+                onCreateCustomExercise = { nameAr, nameEn, category ->
+                    exercisesViewModel.createCustomExercise(
+                        nameAr = nameAr,
+                        nameEn = nameEn,
+                        category = category,
+                        creatorMemberId = memberState.activeMember?.id,
+                    )
+                },
                 onTabSelected = { tab ->
                     when (tab) {
                         AzmNavTab.HOME -> navController.navigate(NavRoutes.Dashboard.route)
@@ -337,12 +348,10 @@ fun AppNavHost(
         composable(
             route = NavRoutes.History.route,
         ) {
-            LaunchedEffect(Unit) {
-                memberState.activeMember?.let { historyViewModel.loadHistory(it.id) }
-            }
-
             HistoryScreen(
                 uiState = historyState,
+                onSelectMemberFilter = { historyViewModel.filterByMember(it) },
+                onToggleSessionExpanded = { historyViewModel.toggleSessionExpanded(it) },
                 onSelectSession = { historyViewModel.selectSession(it) },
                 onDeleteSession = { historyViewModel.deleteSession(it) },
                 onNavigateBack = { navController.popBackStack() },
@@ -361,10 +370,15 @@ fun AppNavHost(
         composable(
             route = NavRoutes.Progress.route,
         ) {
+            val progressViewModel: ProgressViewModel = viewModel(
+                factory = ProgressViewModel.Factory(container.memberRepository, container.workoutRepository)
+            )
+            val progressState by progressViewModel.uiState.collectAsStateWithLifecycle()
+
             ProgressScreen(
-                members = memberState.members,
-                activeMember = memberState.activeMember,
-                onSelectMember = { memberViewModel.selectMember(it) },
+                uiState = progressState,
+                onSelectMember = { progressViewModel.selectMember(it) },
+                onPeriodSelected = { progressViewModel.selectPeriod(it) },
                 onTabSelected = { tab ->
                     when (tab) {
                         AzmNavTab.HOME -> navController.navigate(NavRoutes.Dashboard.route)

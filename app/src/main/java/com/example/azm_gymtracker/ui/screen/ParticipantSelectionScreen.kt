@@ -75,6 +75,7 @@ fun ParticipantSelectionScreen(
     initialSelectedMemberIds: Set<Long> = emptySet(),
     onStartWorkout: (selectedMemberIds: List<Long>) -> Unit,
     onCreateMember: (name: String, colorHex: String) -> Unit,
+    onUpdateMember: (Member) -> Unit = {},
     onDeleteMember: (Member) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -110,7 +111,15 @@ fun ParticipantSelectionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Back button (48x48dp in #10271C)
+                // Title (Start side / Right in RTL)
+                Text(
+                    text = stringResource(R.string.participants_title),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = AzmDarkOnSurface,
+                )
+
+                // Back button (End side / Left in RTL, 48x48dp in #10271C)
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -126,13 +135,6 @@ fun ParticipantSelectionScreen(
                         modifier = Modifier.size(24.dp),
                     )
                 }
-
-                Text(
-                    text = stringResource(R.string.participants_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
-                )
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -140,17 +142,24 @@ fun ParticipantSelectionScreen(
                 text = stringResource(R.string.participants_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = AzmDarkOnSurfaceMuted,
-                modifier = Modifier.align(Alignment.End),
+                modifier = Modifier.align(Alignment.Start),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Selection Heading Row: "المشاركون" + Badge "3 محددون"
+            // Selection Heading Row: "المشاركون" (Start) + Badge "3 محددون" (End)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Text(
+                    text = stringResource(R.string.participants_heading),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = AzmDarkOnSurface,
+                )
+
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
@@ -164,13 +173,6 @@ fun ParticipantSelectionScreen(
                         fontWeight = FontWeight.Medium,
                     )
                 }
-
-                Text(
-                    text = stringResource(R.string.participants_heading),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
-                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -259,43 +261,53 @@ fun ParticipantSelectionScreen(
         )
     }
 
-    // Delete Member Confirmation
+    // Edit Participant Dialog
+    editingMember?.let { member ->
+        EditParticipantDialog(
+            member = member,
+            onDismiss = { editingMember = null },
+            onConfirm = { updatedMember ->
+                onUpdateMember(updatedMember)
+                editingMember = null
+            },
+        )
+    }
+
+    // Delete Member Confirmation (with strong warning dialog explaining history cascade)
     memberToDelete?.let { member ->
         AlertDialog(
             onDismissRequest = { memberToDelete = null },
             containerColor = AzmDarkSurface,
+            shape = RoundedCornerShape(32.dp),
             title = {
                 Text(
-                    text = stringResource(R.string.action_delete),
+                    text = "حذف المتدرب نهائياً؟",
                     style = MaterialTheme.typography.titleLarge,
                     color = AzmDarkOnSurface,
+                    fontWeight = FontWeight.Bold,
                 )
             },
             text = {
                 Text(
-                    text = "${member.name} • سيتم حذف المتدرب من هذا الجهاز.",
+                    text = "هل أنت متأكد من حذف \"${member.name}\"؟\n\nتنبيه: سيؤدي حذف هذا المتدرب إلى إزالة جميع سجلات تمارينه وجولاته السابقة نهائياً من هذا الجهاز. هذه الخطوة لا يمكن التراجع عنها.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = AzmDarkOnSurfaceMuted,
                 )
             },
             confirmButton = {
-                TextButton(
+                AzmPrimaryButton(
+                    text = "حذف نهائي",
                     onClick = {
                         onDeleteMember(member)
                         selectedIds.remove(member.id)
                         memberToDelete = null
                     },
-                ) {
-                    Text(
-                        text = stringResource(R.string.action_delete),
-                        color = AzmError,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
             },
             dismissButton = {
                 TextButton(onClick = { memberToDelete = null }) {
-                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurface)
+                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
                 }
             },
         )
@@ -326,48 +338,17 @@ private fun ParticipantCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Left Actions: Delete & Edit circular buttons (48dp)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(AzmDarkSurfaceVariant),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.action_delete),
-                    tint = AzmDarkOnSurfaceMuted,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-
-            IconButton(
-                onClick = onEdit,
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(AzmDarkSurfaceVariant),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "تعديل",
-                    tint = AzmDarkOnSurfaceMuted,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
-
-        // Right Content: Name + Status Subtitle + Avatar Initial
+        // Start Content (Right in RTL): Avatar Initial + Name & Status Subtitle
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(horizontalAlignment = Alignment.End) {
+            ParticipantAvatarBox(
+                character = member.name,
+                backgroundColor = color,
+            )
+
+            Column(horizontalAlignment = Alignment.Start) {
                 Text(
                     text = member.name,
                     style = MaterialTheme.typography.titleLarge,
@@ -382,11 +363,42 @@ private fun ParticipantCard(
                     )
                 }
             }
+        }
 
-            ParticipantAvatarBox(
-                character = member.name,
-                backgroundColor = color,
-            )
+        // End Actions (Left in RTL): Edit & Delete circular buttons (44dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            IconButton(
+                onClick = onEdit,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(AzmDarkSurfaceVariant),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.action_edit),
+                    tint = AzmDarkOnSurfaceMuted,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(AzmDarkSurfaceVariant),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.action_delete),
+                    tint = AzmDarkOnSurfaceMuted,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }
@@ -484,6 +496,113 @@ fun AddParticipantDialog(
                 text = "إضافة",
                 enabled = name.isNotBlank(),
                 onClick = { onConfirm(name.trim(), selectedColorHex) },
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+            }
+        },
+    )
+}
+
+/**
+ * Edit Participant Dialog matching Figma design.
+ */
+@Composable
+fun EditParticipantDialog(
+    member: Member,
+    onDismiss: () -> Unit,
+    onConfirm: (Member) -> Unit,
+) {
+    var name by remember { mutableStateOf(member.name) }
+    val colors = listOf(
+        "#3FE779" to MemberColorGreen,
+        "#FFD177" to MemberColorGold,
+        "#8E9CFF" to MemberColorIndigo,
+        "#E9A87C" to MemberColorCoral,
+    )
+    var selectedColorHex by remember { mutableStateOf(member.colorHex ?: colors.first().first) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = AzmDarkSurface,
+        shape = RoundedCornerShape(32.dp),
+        title = {
+            Text(
+                text = "تعديل المتدرب",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = AzmDarkOnSurface,
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("الاسم") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = AzmEmeraldGreen,
+                        unfocusedBorderColor = AzmBorderSubtle,
+                        focusedTextColor = AzmDarkOnSurface,
+                        unfocusedTextColor = AzmDarkOnSurface,
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+
+                Text(
+                    text = "اللون والحرف الأول",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AzmDarkOnSurfaceMuted,
+                )
+
+                // Color picker row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                ) {
+                    colors.forEach { (hex, composeColor) ->
+                        val isChosen = selectedColorHex.equals(hex, ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(composeColor)
+                                .then(
+                                    if (isChosen) Modifier.border(
+                                        2.dp,
+                                        Color.White,
+                                        RoundedCornerShape(16.dp),
+                                    ) else Modifier
+                                )
+                                .clickable { selectedColorHex = hex },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = name.take(1).ifEmpty { "أ" },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AzmDarkBackground,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            AzmPrimaryButton(
+                text = "حفظ التعديل",
+                enabled = name.isNotBlank(),
+                onClick = {
+                    onConfirm(member.copy(name = name.trim(), colorHex = selectedColorHex))
+                },
                 modifier = Modifier.padding(horizontal = 8.dp),
             )
         },

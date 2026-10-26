@@ -50,26 +50,26 @@
 
 ## Milestone 4: Elimination of Mock Data & Live Functionality
 
-- [ ] **TASK-4.1**: Remove all hardcoded dummy data (`RecentSessionCardMock`, fixed names "أحمد/محمد/سلمان", fixed volume `8,640`, fixed set values `72.5×8`) across Dashboard, ActiveSession, Summary, History, Progress, Exercises, and ParticipantSelection.
-- [ ] **TASK-4.2**: Overhaul `ExercisePickerSheet` to use Azm design theme and Arabic categories; hide "فيديو" badge in MVP and keep only "مخصص" (Custom).
-- [ ] **TASK-4.3**: Implement participant profile editing and permanent deletion with strong warning dialog explaining history cascade.
-- [ ] **TASK-4.4**: Verify that no hardcoded strings or numeric literals remain outside test fixtures and preview providers.
+- [x] **TASK-4.1**: Remove all hardcoded dummy data (`RecentSessionCardMock`, fixed names "أحمد/محمد/سلمان", fixed volume `8,640`, fixed set values `72.5×8`) across Dashboard, ActiveSession, Summary, History, Progress, Exercises, and ParticipantSelection.
+- [x] **TASK-4.2**: Overhaul `ExercisePickerSheet` to use Azm design theme and Arabic categories; hide "فيديو" badge in MVP and keep only "مخصص" (Custom).
+- [x] **TASK-4.3**: Implement participant profile editing and permanent deletion with strong warning dialog explaining history cascade.
+- [x] **TASK-4.4**: Verify that no hardcoded strings or numeric literals remain outside test fixtures and preview providers.
 
 ---
 
 ## Milestone 5: Figma Pixel-Perfect Polish & Arabic RTL
 
-- [ ] **TASK-5.1**: Apply Figma layout specifications screen-by-screen: 16dp corner radiuses, emerald/neon green gradients, 48dp touch targets, visually distinct disabled button states (opacity 0.4).
-- [ ] **TASK-5.2**: Refactor all Compose layouts to use logical alignment (`Alignment.Start`, `Alignment.End`, `Arrangement.Start`, `Arrangement.End`) and `Icons.AutoMirrored` icons, removing artificial manual inversion.
-- [ ] **TASK-5.3**: Extract all user-facing strings into `values/strings.xml` and `values-ar/strings.xml` with 100% parity.
-- [ ] **TASK-5.4**: Implement all UI state variations across screens: Loading (shimmer/spinner), Empty (localized graphics and text), Error (inline / snackbar), and Success.
+- [x] **TASK-5.1**: Apply Figma layout specifications screen-by-screen: 16dp corner radiuses, emerald/neon green gradients, 48dp touch targets, visually distinct disabled button states (opacity 0.4).
+- [x] **TASK-5.2**: Refactor all Compose layouts to use logical alignment (`Alignment.Start`, `Alignment.End`, `Arrangement.Start`, `Arrangement.End`) and `Icons.AutoMirrored` icons, removing artificial manual inversion.
+- [x] **TASK-5.3**: Extract all user-facing strings into `values/strings.xml` and `values-ar/strings.xml` with 100% parity.
+- [x] **TASK-5.4**: Implement all UI state variations across screens: Loading (shimmer/spinner), Empty (localized graphics and text), Error (inline / snackbar), and Success.
 
 ---
 
 ## Milestone 6: Quality, Security & Production Verification
 
-- [ ] **TASK-6.1**: Set `android:allowBackup="false"` in `AndroidManifest.xml` and update backup rules for offline privacy.
-- [ ] **TASK-6.2**: Reconcile lifecycle dependencies (`2.8.7` vs `2.11.0`) and document `compileSdk` alignment.
-- [ ] **TASK-6.3**: Write Compose UI tests for RTL mirroring, isolated LTR numeric formatting (`72.5 كغ`), and 48dp touch targets.
-- [ ] **TASK-6.4**: Run `./gradlew test` and `./gradlew assembleDebug` and verify 100% pass rate.
-- [ ] **TASK-6.5**: Perform physical/emulator verification (Airplane mode, process death during session, reboot, Arabic RTL, Light/Dark mode) and submit Final Delivery Report.
+- [x] **TASK-6.1**: Set `android:allowBackup="false"` in `AndroidManifest.xml` and update backup rules for offline privacy.
+- [x] **TASK-6.2**: Reconcile lifecycle dependencies (`2.8.7` vs `2.11.0`) and document `compileSdk` alignment.
+- [x] **TASK-6.3**: Write Compose UI tests for RTL mirroring, isolated LTR numeric formatting (`72.5 كغ`), and 48dp touch targets.
+- [x] **TASK-6.4**: Run `./gradlew test` and `./gradlew assembleDebug` and verify 100% pass rate.
+- [x] **TASK-6.5**: Perform physical/emulator verification (Airplane mode, process death during session, reboot, Arabic RTL, Light/Dark mode) and submit Final Delivery Report.

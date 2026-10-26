@@ -107,6 +107,40 @@ class MemberViewModel(private val repository: MemberRepository) : ViewModel() {
         }
     }
 
+    /**
+     * Validates and updates an existing member's profile.
+     */
+    fun updateMember(member: Member, onSuccess: () -> Unit = {}) {
+        val validationResult = MemberNameValidator.validate(member.name)
+        if (validationResult != MemberNameValidator.Result.Valid) {
+            val errorMsg = when (validationResult) {
+                MemberNameValidator.Result.Blank -> "الاسم لا يمكن أن يكون فارغاً"
+                is MemberNameValidator.Result.TooLong ->
+                    "يجب ألا يتجاوز الاسم ${validationResult.max} حرفاً"
+                MemberNameValidator.Result.Valid -> null
+            }
+            _uiState.update { it.copy(nameError = errorMsg) }
+            return
+        }
+
+        val trimmed = member.name.trim()
+        if (_uiState.value.members.any { it.id != member.id && it.name.equals(trimmed, ignoreCase = true) }) {
+            _uiState.update { it.copy(nameError = "هذا الاسم مستخدم بالفعل") }
+            return
+        }
+
+        _uiState.update { it.copy(nameError = null) }
+        viewModelScope.launch {
+            runCatching {
+                repository.updateMember(member.copy(name = trimmed))
+            }.onSuccess {
+                onSuccess()
+            }.onFailure { e ->
+                _uiState.update { it.copy(error = e.message ?: "فشل تعديل العضو") }
+            }
+        }
+    }
+
     /** Clears the name validation error (e.g. when the user starts typing). */
     fun clearNameError() {
         _uiState.update { it.copy(nameError = null) }

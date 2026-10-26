@@ -67,12 +67,13 @@ import com.example.azm_gymtracker.ui.theme.AzmPrimaryGradient
 fun ExercisesScreen(
     exercises: List<Exercise>,
     onSelectExercise: (Exercise) -> Unit,
-    onCreateCustomExercise: () -> Unit,
+    onCreateCustomExercise: (nameAr: String, nameEn: String, category: MuscleCategory) -> Unit,
     onTabSelected: (AzmNavTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<MuscleCategory?>(null) }
+    var showCreateDialog by remember { mutableStateOf(false) }
 
     val filteredExercises = remember(exercises, searchQuery, selectedCategory) {
         exercises.filter { exercise ->
@@ -99,7 +100,7 @@ fun ExercisesScreen(
                     .shadow(16.dp, CircleShape, spotColor = AzmEmeraldGreen.copy(alpha = 0.25f))
                     .clip(CircleShape)
                     .background(AzmPrimaryGradient)
-                    .clickable(onClick = onCreateCustomExercise)
+                    .clickable { showCreateDialog = true }
                     .padding(horizontal = 20.dp, vertical = 14.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -222,7 +223,7 @@ fun ExercisesScreen(
                 text = "${filteredExercises.size} تمرينًا • جاهزة ومخصصة",
                 style = MaterialTheme.typography.bodySmall,
                 color = AzmDarkOnSurfaceMuted,
-                modifier = Modifier.align(Alignment.End),
+                modifier = Modifier.align(Alignment.Start),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -244,6 +245,107 @@ fun ExercisesScreen(
                 }
             }
         }
+    }
+
+    if (showCreateDialog) {
+        var nameArInput by remember { mutableStateOf("") }
+        var nameEnInput by remember { mutableStateOf("") }
+        var selectedCat by remember { mutableStateOf(MuscleCategory.CHEST) }
+
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showCreateDialog = false },
+            containerColor = AzmDarkSurface,
+            title = {
+                Text(
+                    text = stringResource(R.string.picker_create_custom),
+                    color = AzmDarkOnSurface,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = nameArInput,
+                        onValueChange = { nameArInput = it },
+                        label = { Text(stringResource(R.string.exercise_name_ar)) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AzmEmeraldGreen,
+                            unfocusedBorderColor = AzmBorderSubtle,
+                            focusedTextColor = AzmDarkOnSurface,
+                            unfocusedTextColor = AzmDarkOnSurface,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    OutlinedTextField(
+                        value = nameEnInput,
+                        onValueChange = { nameEnInput = it },
+                        label = { Text(stringResource(R.string.exercise_name_en)) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = AzmEmeraldGreen,
+                            unfocusedBorderColor = AzmBorderSubtle,
+                            focusedTextColor = AzmDarkOnSurface,
+                            unfocusedTextColor = AzmDarkOnSurface,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Text(
+                        text = stringResource(R.string.exercise_category_label),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AzmDarkOnSurfaceMuted,
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        MuscleCategory.entries.forEach { cat ->
+                            val catName = when (cat) {
+                                MuscleCategory.CHEST -> stringResource(R.string.picker_category_chest)
+                                MuscleCategory.BACK -> stringResource(R.string.picker_category_back)
+                                MuscleCategory.LEGS -> stringResource(R.string.picker_category_legs)
+                                MuscleCategory.SHOULDERS -> stringResource(R.string.picker_category_shoulders)
+                                MuscleCategory.ARMS -> stringResource(R.string.picker_category_arms)
+                                MuscleCategory.CORE -> stringResource(R.string.picker_category_core)
+                                MuscleCategory.CARDIO -> stringResource(R.string.picker_category_cardio)
+                                MuscleCategory.OTHER -> stringResource(R.string.picker_category_all)
+                            }
+                            MuscleFilterChip(
+                                label = catName,
+                                isSelected = selectedCat == cat,
+                                onClick = { selectedCat = cat },
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        if (nameArInput.isNotBlank() || nameEnInput.isNotBlank()) {
+                            onCreateCustomExercise(nameArInput.trim(), nameEnInput.trim(), selectedCat)
+                            showCreateDialog = false
+                        }
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_save),
+                        color = AzmEmeraldGreen,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showCreateDialog = false }) {
+                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                }
+            },
+        )
     }
 }
 
@@ -292,26 +394,12 @@ private fun ExerciseCardItem(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Exercise thumbnail box
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(AzmDarkSurfaceSelected),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "🏋️",
-                fontSize = 32.sp,
-            )
-        }
-
-        // Exercise Information
+        // Start side / Right in RTL: Exercise Information
         Column(
-            horizontalAlignment = Alignment.End,
+            horizontalAlignment = Alignment.Start,
             modifier = Modifier
                 .weight(1f)
-                .padding(start = 12.dp),
+                .padding(end = 12.dp),
         ) {
             Text(
                 text = exercise.nameAr,
@@ -325,22 +413,38 @@ private fun ExerciseCardItem(
                 style = MaterialTheme.typography.bodySmall,
                 color = AzmDarkOnSurfaceMuted,
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(AzmDarkSurfaceVariant)
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                ) {
-                    Text(
-                        text = if (exercise.isCustom) "مخصص" else "فيديو",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AzmEmeraldGreen,
-                        fontSize = 10.sp,
-                    )
+            if (exercise.isCustom) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .background(AzmDarkSurfaceVariant)
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.badge_custom),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AzmEmeraldGreen,
+                            fontSize = 10.sp,
+                        )
+                    }
                 }
             }
+        }
+
+        // End side / Left in RTL: Exercise thumbnail box
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(AzmDarkSurfaceSelected),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "🏋️",
+                fontSize = 32.sp,
+            )
         }
     }
 }

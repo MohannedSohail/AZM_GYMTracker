@@ -17,10 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -105,28 +106,13 @@ fun AzmTopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Status Badge: "بدون إنترنت" (Pill 999dp, #10271C background, #3FE779 text)
-        Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(AzmDarkSurfaceVariant)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = if (isOffline) stringResource(R.string.status_offline) else "",
-                style = MaterialTheme.typography.bodySmall,
-                color = AzmEmeraldGreen,
-                fontWeight = FontWeight.Medium,
-            )
-        }
-
-        // AZM Wordmark + Geometric Emblem
+        // AZM Wordmark + Geometric Emblem (Start side / Right in RTL)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Column(horizontalAlignment = Alignment.End) {
+            AzmEmblem(size = 40.dp)
+            Column(horizontalAlignment = Alignment.Start) {
                 Text(
                     text = "عزم",
                     style = MaterialTheme.typography.headlineLarge.copy(fontSize = 24.sp),
@@ -140,7 +126,22 @@ fun AzmTopBar(
                     letterSpacing = 1.sp,
                 )
             }
-            AzmEmblem(size = 40.dp)
+        }
+
+        // Status Badge: "بدون إنترنت" (End side / Left in RTL)
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(AzmDarkSurfaceVariant)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = if (isOffline) stringResource(R.string.status_offline) else "",
+                style = MaterialTheme.typography.bodySmall,
+                color = AzmEmeraldGreen,
+                fontWeight = FontWeight.Medium,
+            )
         }
     }
 }
@@ -173,7 +174,7 @@ fun AzmBottomNavigation(
         // Tab 4: التقدم (Progress)
         AzmNavItem(
             title = stringResource(R.string.nav_progress),
-            icon = Icons.Default.ShowChart,
+            icon = Icons.AutoMirrored.Filled.ShowChart,
             isSelected = currentTab == AzmNavTab.PROGRESS,
             onClick = { onTabSelected(AzmNavTab.PROGRESS) },
             modifier = Modifier.weight(1f),
@@ -292,8 +293,9 @@ fun AzmPrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
+            .graphicsLayer { alpha = opacity }
             .clip(CircleShape)
-            .background(if (enabled) AzmPrimaryGradient else AzmPrimaryGradient)
+            .background(AzmPrimaryGradient)
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
@@ -301,7 +303,7 @@ fun AzmPrimaryButton(
             text = text,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = AzmDarkBackground.copy(alpha = opacity),
+            color = AzmDarkBackground,
         )
     }
 }

@@ -146,18 +146,18 @@ fun ActiveSessionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Pause button (48dp circle)
+                // Back arrow button (Start side / Right in RTL, 48dp circle)
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(AzmDarkSurfaceVariant)
-                        .clickable { showPauseDialog = true },
+                        .clickable { showExitConfirmDialog = true },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = if (uiState.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
-                        contentDescription = stringResource(R.string.session_pause_action),
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = stringResource(R.string.action_back),
                         tint = AzmDarkOnSurface,
                         modifier = Modifier.size(24.dp),
                     )
@@ -180,18 +180,18 @@ fun ActiveSessionScreen(
                     )
                 }
 
-                // Back arrow button (48dp circle)
+                // Pause button (End side / Left in RTL, 48dp circle)
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(AzmDarkSurfaceVariant)
-                        .clickable { showExitConfirmDialog = true },
+                        .clickable { showPauseDialog = true },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = stringResource(R.string.action_back),
+                        imageVector = if (uiState.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                        contentDescription = stringResource(R.string.session_pause_action),
                         tint = AzmDarkOnSurface,
                         modifier = Modifier.size(24.dp),
                     )
@@ -210,7 +210,7 @@ fun ActiveSessionScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
             ) {
                 uiState.participants.forEach { member ->
                     val isTurn = member.id == uiState.activeTurnMemberId
@@ -238,17 +238,8 @@ fun ActiveSessionScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 104.dp, height = 72.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(AzmDarkSurfaceSelected),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("🏋️", fontSize = 32.sp)
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
+                // Exercise Details (Start side / Right in RTL)
+                Column(horizontalAlignment = Alignment.Start) {
                     Text(
                         text = "الصدر • بار",
                         style = MaterialTheme.typography.bodySmall,
@@ -264,6 +255,17 @@ fun ActiveSessionScreen(
                         fontWeight = FontWeight.Bold,
                         color = AzmDarkOnSurface,
                     )
+                }
+
+                // Exercise Illustration / Thumbnail Box (End side / Left in RTL)
+                Box(
+                    modifier = Modifier
+                        .size(width = 104.dp, height = 72.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(AzmDarkSurfaceSelected),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("🏋️", fontSize = 32.sp)
                 }
             }
 
@@ -320,7 +322,14 @@ fun ActiveSessionScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Text(
+                        text = currentTurnTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AzmEmeraldGreen,
+                        fontWeight = FontWeight.Bold,
+                    )
                     Text(
                         text = if (uiState.previousSetHint != null) {
                             stringResource(R.string.last_round_hint, uiState.previousSetHint)
@@ -330,12 +339,6 @@ fun ActiveSessionScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = AzmDarkOnSurfaceMuted,
                     )
-                    Text(
-                        text = currentTurnTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AzmEmeraldGreen,
-                        fontWeight = FontWeight.Bold,
-                    )
                 }
 
                 // Weight Stepper (±2.5 kg)
@@ -344,8 +347,8 @@ fun ActiveSessionScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(text = "±2.5", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
                     Text(text = stringResource(R.string.stepper_weight_label), style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface)
+                    Text(text = "±2.5", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
                 }
 
                 StepperControl(
@@ -360,8 +363,8 @@ fun ActiveSessionScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(text = "±1", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
                     Text(text = stringResource(R.string.stepper_reps_label), style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface)
+                    Text(text = "±1", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted)
                 }
 
                 StepperControl(
@@ -634,6 +637,27 @@ private fun SetQueueRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // Start side / Right in RTL: Title + Stats
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                color = AzmDarkOnSurface,
+            )
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Text(
+                    text = stats,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isActive) AzmDarkOnSurface else AzmDarkOnSurfaceMuted,
+                )
+            }
+        }
+
+        // End side / Left in RTL: Status indicator / Delete icon
         if (isCompleted) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (onDelete != null) {
@@ -662,25 +686,6 @@ private fun SetQueueRow(
                 modifier = Modifier.size(18.dp),
             )
         }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                Text(
-                    text = stats,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isActive) AzmDarkOnSurface else AzmDarkOnSurfaceMuted,
-                )
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                color = AzmDarkOnSurface,
-            )
-        }
     }
 }
 
@@ -701,19 +706,19 @@ private fun StepperControl(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Decrease button (−)
+        // Increase button (＋) (Start side / Right in RTL)
         Box(
             modifier = Modifier
                 .size(56.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(AzmDarkSurfaceVariant)
-                .clickable(onClick = onDecrease),
+                .background(AzmDarkSurfaceSelected)
+                .clickable(onClick = onIncrease),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "−",
+                text = "＋",
                 style = MaterialTheme.typography.headlineMedium,
-                color = AzmDarkOnSurface,
+                color = AzmEmeraldGreen,
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -728,19 +733,19 @@ private fun StepperControl(
             )
         }
 
-        // Increase button (＋)
+        // Decrease button (−) (End side / Left in RTL)
         Box(
             modifier = Modifier
                 .size(56.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(AzmDarkSurfaceSelected)
-                .clickable(onClick = onIncrease),
+                .background(AzmDarkSurfaceVariant)
+                .clickable(onClick = onDecrease),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "＋",
+                text = "−",
                 style = MaterialTheme.typography.headlineMedium,
-                color = AzmEmeraldGreen,
+                color = AzmDarkOnSurface,
                 fontWeight = FontWeight.Bold,
             )
         }

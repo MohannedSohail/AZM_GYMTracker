@@ -45,6 +45,7 @@ import com.example.azm_gymtracker.ui.theme.AzmDarkBackground
 import com.example.azm_gymtracker.ui.theme.AzmDarkOnSurface
 import com.example.azm_gymtracker.ui.theme.AzmDarkOnSurfaceMuted
 import com.example.azm_gymtracker.ui.theme.AzmDarkSurface
+import com.example.azm_gymtracker.ui.theme.AzmDarkSurfaceVariant
 import com.example.azm_gymtracker.ui.theme.AzmEmeraldGreen
 import com.example.azm_gymtracker.ui.theme.AzmHeroCardGradient
 import java.text.SimpleDateFormat
@@ -98,12 +99,12 @@ fun DashboardScreen(
                         .border(1.dp, AzmBorderSubtle, RoundedCornerShape(24.dp))
                         .padding(20.dp),
                 ) {
-                    // Geometric plate background watermark
+                    // Geometric plate background watermark (End / Left in RTL, leaving Start / Right for text)
                     AzmEmblem(
                         size = 170.dp,
                         strokeColor = AzmEmeraldGreen.copy(alpha = 0.12f),
                         modifier = Modifier
-                            .align(Alignment.TopStart)
+                            .align(Alignment.TopEnd)
                             .padding(top = 10.dp),
                     )
 
@@ -112,7 +113,7 @@ fun DashboardScreen(
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         // Header text block
-                        Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
+                        Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
                             Text(
                                 text = if (activeSession != null) "تمرين قيد التقدم" else stringResource(R.string.hero_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
@@ -169,15 +170,15 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = stringResource(R.string.recent_sessions_count, recentSessions.size.coerceAtLeast(1)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AzmDarkOnSurfaceMuted,
-                    )
-                    Text(
                         text = stringResource(R.string.recent_sessions_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = AzmDarkOnSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.recent_sessions_count, recentSessions.size),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AzmDarkOnSurfaceMuted,
                     )
                 }
             }
@@ -185,29 +186,47 @@ fun DashboardScreen(
             // Recent Sessions List
             if (recentSessions.isEmpty()) {
                 item {
-                    RecentSessionCardMock(
-                        dateTitle = "اليوم، 22 أكتوبر",
-                        metadata = "42:18 دقيقة • 3 مشاركين • 8,640 كجم",
-                        onClick = onStartWorkout,
-                    )
-                }
-                item {
-                    RecentSessionCardMock(
-                        dateTitle = "الثلاثاء، 20 أكتوبر",
-                        metadata = "38:40 دقيقة • 3 مشاركين • 7,920 كجم",
-                        onClick = onStartWorkout,
-                    )
-                }
-                item {
-                    RecentSessionCardMock(
-                        dateTitle = "الأحد، 18 أكتوبر",
-                        metadata = "40:12 دقيقة • 3 مشاركين • 7,200 كجم",
-                        onClick = onStartWorkout,
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(AzmDarkSurface)
+                            .border(1.dp, AzmBorderSubtle, RoundedCornerShape(20.dp))
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(AzmDarkSurfaceVariant),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                tint = AzmEmeraldGreen,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = stringResource(R.string.history_empty),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AzmDarkOnSurface,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.history_empty_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AzmDarkOnSurfaceMuted,
+                        )
+                    }
                 }
             } else {
                 items(recentSessions.take(5), key = { it.id }) { session ->
-                    val dateFormat = SimpleDateFormat("EEEE، d MMMM", Locale("ar"))
+                    val dateFormat = SimpleDateFormat("EEEE، d MMMM", Locale.forLanguageTag("ar"))
                     val dateStr = dateFormat.format(Date(session.startedAt))
                     val durationSec = ((session.finishedAt ?: session.startedAt) - session.startedAt) / 1000
                     val minutes = durationSec / 60
@@ -216,7 +235,7 @@ fun DashboardScreen(
                     val totalVol = session.exercises.sumOf { ex -> ex.sets.sumOf { (it.weightKg ?: 0f).toDouble() * it.reps } }
                     val volumeStr = String.format(Locale.US, "%,.0f", totalVol)
 
-                    RecentSessionCardMock(
+                    RecentSessionCard(
                         dateTitle = dateStr,
                         metadata = "$durationStr دقيقة • $volumeStr كجم",
                         onClick = { onSelectRecentSession(session) },
@@ -232,7 +251,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun RecentSessionCardMock(
+private fun RecentSessionCard(
     dateTitle: String,
     metadata: String,
     onClick: () -> Unit,
@@ -248,32 +267,11 @@ private fun RecentSessionCardMock(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-            contentDescription = null,
-            tint = AzmDarkOnSurfaceMuted,
-            modifier = Modifier.size(20.dp),
-        )
-
+        // Start side / Right in RTL: Calendar icon + Date & Metadata
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = dateTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = metadata,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AzmDarkOnSurfaceMuted,
-                )
-            }
-
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -288,6 +286,29 @@ private fun RecentSessionCardMock(
                     modifier = Modifier.size(20.dp),
                 )
             }
+
+            Column(horizontalAlignment = Alignment.Start) {
+                Text(
+                    text = dateTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AzmDarkOnSurface,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = metadata,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AzmDarkOnSurfaceMuted,
+                )
+            }
         }
+
+        // End side / Left in RTL: Chevron
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            contentDescription = null,
+            tint = AzmDarkOnSurfaceMuted,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
