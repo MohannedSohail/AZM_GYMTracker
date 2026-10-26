@@ -75,6 +75,8 @@
     <string name="session_pause_action">إيقاف مؤقت</string>
     <string name="session_discard_dialog_title">إلغاء التمرين؟</string>
     <string name="session_discard_dialog_msg">هل أنت متأكد من إلغاء هذا التمرين؟ سيتم حذف جميع الجولات المسجلة فيه.</string>
+    <string name="session_exit_keep_running">متابعة لاحقاً والعودة</string>
+    <string name="session_exit_discard">إلغاء وحذف التمرين</string>
     <string name="delete_round_dialog_title">حذف الجولة؟</string>
     <string name="delete_round_dialog_msg">يمكنك التراجع بعد الحذف.</string>
 

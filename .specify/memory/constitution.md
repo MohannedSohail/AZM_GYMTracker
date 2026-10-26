@@ -24,7 +24,7 @@ Optimize the workout recording workflow for speed, clarity, and minimal distract
 Core workout recording, member management, exercise catalogs, and historical review must never require internet access or remote network connectivity. The application must function with 100% feature parity in airplane mode.
 
 ### 3. Data Integrity
-Each workout session must belong to exactly one member profile, and every logged set must belong strictly to the correct exercise within that session. Deletions and updates must adhere to non-nullable foreign keys and cascading or restricted rules so that data from one member never bleeds into another.
+Each workout session has one or more participants (members). Every logged set belongs strictly to exactly one member **and** to the correct exercise within that session. Deletions and updates must follow non-nullable foreign keys and cascading rules so that one member's sets never appear in another member's records, even when both trained in the same session. Deleting a member removes their participation and sets; sessions left with zero participants are deleted.
 
 ### 4. Privacy
 Minimize stored personal information. The MVP strictly avoids user accounts, email/password registrations, cloud uploads, telemetry, external analytics, and background network calls. All personal fitness records remain solely on the physical device.
@@ -48,6 +48,7 @@ Full accessibility and natural ergonomics must be maintained across all device o
 - Isolated LTR numeric formatting for repetitions and weights to prevent inverted decimals (e.g., `85.5 kg` / `85.5 كغ`).
 - Touch targets for core gym interactions must meet or exceed 48x48 dp.
 - 100% localized string resources in `values/strings.xml` and `values-ar/strings.xml`.
+- Official font Thmanyah (ثمانية) is bundled in the application with weights 400/500/700/900 in `res/font`, with license documentation preserved in the repository.
 
 ### 9. Incremental Delivery
 Implement work through small, traceable, and reviewable tasks. Never proceed past SDLC approval gates (Gates A through G) without explicit human review and verification.

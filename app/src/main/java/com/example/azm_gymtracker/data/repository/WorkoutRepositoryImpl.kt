@@ -1,39 +1,47 @@
 package com.example.azm_gymtracker.data.repository
 
 import com.example.azm_gymtracker.data.local.dao.WorkoutDao
-import com.example.azm_gymtracker.data.local.entity.WorkoutExerciseEntity
+import com.example.azm_gymtracker.data.local.entity.ExerciseRecordTuple
+import com.example.azm_gymtracker.data.local.entity.ParticipantVolumeTuple
+import com.example.azm_gymtracker.data.local.entity.WeightProgressionPointTuple
 import com.example.azm_gymtracker.data.local.entity.WorkoutSessionEntity
+import com.example.azm_gymtracker.data.local.entity.WorkoutSessionWithDetails
 import com.example.azm_gymtracker.data.local.entity.WorkoutSetEntity
 import com.example.azm_gymtracker.domain.model.SessionStatus
-import com.example.azm_gymtracker.domain.model.WorkoutExercise
 import com.example.azm_gymtracker.domain.model.WorkoutSession
 import com.example.azm_gymtracker.domain.model.WorkoutSet
 import com.example.azm_gymtracker.domain.repository.WorkoutRepository
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /**
  * Room-backed implementation of [WorkoutRepository].
- *
- * Note: This implementation returns a simplified [WorkoutSession] from [getActiveSession]
- * and [getCompletedSessions] that does not eagerly load nested exercises and sets.
- * Full nested loading is handled at the ViewModel layer by combining multiple DAOs.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutRepositoryImpl(private val dao: WorkoutDao) : WorkoutRepository {
 
-    override fun getActiveSession(memberId: Long): Flow<WorkoutSession?> =
-        dao.getActiveSession(memberId).map { entity -> entity?.toDomain() }
+    override fun getActiveSession(): Flow<WorkoutSession?> =
+        dao.getActiveSession().map { entity -> entity?.toDomain() }
+
+    override fun getActiveSessionWithDetails(): Flow<WorkoutSessionWithDetails?> =
+        dao.getActiveSessionWithDetails()
+
+    override fun getSessionWithDetails(sessionId: Long): Flow<WorkoutSessionWithDetails?> =
+        dao.getSessionWithDetails(sessionId)
 
     override fun getCompletedSessions(memberId: Long): Flow<List<WorkoutSession>> =
-        dao.getCompletedSessions(memberId).map { entities -> entities.map { it.toDomain() } }
+        dao.getCompletedSessionsForMember(memberId).map { entities -> entities.map { it.toDomain() } }
 
-    override suspend fun startSession(memberId: Long): Long {
-        return dao.insertSession(
-            WorkoutSessionEntity(memberId = memberId, status = "IN_PROGRESS")
+    override fun getCompletedSessionsWithDetails(memberId: Long?): Flow<List<WorkoutSessionWithDetails>> =
+        if (memberId == null) {
+            dao.getAllCompletedSessionsWithDetails()
+        } else {
+            dao.getCompletedSessionsWithDetailsForMember(memberId)
+        }
+
+    override suspend fun startSession(participantIds: List<Long>): Long {
+        return dao.startSessionWithParticipants(
+            session = WorkoutSessionEntity(status = "IN_PROGRESS"),
+            participantIds = participantIds,
         )
     }
 
@@ -42,29 +50,20 @@ class WorkoutRepositoryImpl(private val dao: WorkoutDao) : WorkoutRepository {
         exerciseId: Long,
         exerciseNameSnapshot: String,
     ): Long {
-        val exercises = dao.getExercisesForSession(sessionId)
-        // Determine current max order index by querying synchronously (acceptable here)
-        val orderIndex = 0 // ViewModel tracks this from observed state
-        return dao.insertWorkoutExercise(
-            WorkoutExerciseEntity(
-                sessionId = sessionId,
-                exerciseId = exerciseId,
-                exerciseNameSnapshot = exerciseNameSnapshot,
-                orderIndex = orderIndex,
-            )
-        )
+        return dao.addExerciseToSession(sessionId, exerciseId, exerciseNameSnapshot)
     }
 
-    override suspend fun addSet(workoutExerciseId: Long, reps: Int, weightKg: Float?): Long {
-        // Set number is determined by the ViewModel from observed sets count
-        return dao.insertSet(
-            WorkoutSetEntity(
-                workoutExerciseId = workoutExerciseId,
-                setNumber = 1, // Placeholder; ViewModel provides actual count + 1
-                reps = reps,
-                weightKg = weightKg,
-            )
-        )
+    override suspend fun addSet(
+        workoutExerciseId: Long,
+        memberId: Long,
+        reps: Int,
+        weightKg: Float?,
+    ): Long {
+        return dao.addSetAtomic(workoutExerciseId, memberId, reps, weightKg)
+    }
+
+    override suspend fun markSetCompleted(setId: Long) {
+        dao.markSetCompleted(setId)
     }
 
     override suspend fun updateSet(set: WorkoutSet) {
@@ -76,57 +75,72 @@ class WorkoutRepositoryImpl(private val dao: WorkoutDao) : WorkoutRepository {
     }
 
     override suspend fun finishSession(sessionId: Long) {
-        dao.updateSession(
-            WorkoutSessionEntity(
-                id = sessionId,
-                memberId = 0L, // updated fields only — memberId preserved via UPDATE
-                status = "COMPLETED",
-                finishedAt = System.currentTimeMillis(),
-            )
-        )
+        dao.finishSession(sessionId)
     }
 
-    override suspend fun discardSession(sessionId: Long) {
-        dao.updateSession(
-            WorkoutSessionEntity(
-                id = sessionId,
-                memberId = 0L,
-                status = "DISCARDED",
-                finishedAt = System.currentTimeMillis(),
-            )
-        )
+    override suspend fun cancelSession(sessionId: Long) {
+        dao.cancelSession(sessionId)
     }
 
     override suspend fun deleteSession(sessionId: Long) {
-        // Room will cascade delete all workout exercises and sets.
-        // We update status to DISCARDED rather than physically deleting
-        // in case the session still has IN_PROGRESS state.
-        dao.updateSession(
-            WorkoutSessionEntity(
-                id = sessionId,
-                memberId = 0L,
-                status = "DISCARDED",
-                finishedAt = System.currentTimeMillis(),
-            )
-        )
+        dao.deleteSession(sessionId)
     }
+
+    override suspend fun updateSessionPausedTime(sessionId: Long, pausedTotalMs: Long) {
+        dao.updateSessionPausedTime(sessionId, pausedTotalMs)
+    }
+
+    override suspend fun getLastSetForMemberInExercise(
+        exerciseId: Long,
+        memberId: Long,
+    ): WorkoutSetEntity? {
+        return dao.getLastSetForMemberInExercise(exerciseId, memberId)
+    }
+
+    override suspend fun getLastSetInExercise(exerciseId: Long): WorkoutSetEntity? {
+        return dao.getLastSetInExercise(exerciseId)
+    }
+
+    override fun getParticipantVolumeBreakdown(sessionId: Long): Flow<List<ParticipantVolumeTuple>> =
+        dao.getParticipantVolumeBreakdown(sessionId)
+
+    override fun getPersonalRecordsForMember(memberId: Long): Flow<List<ExerciseRecordTuple>> =
+        dao.getPersonalRecordsForMember(memberId)
+
+    override fun getTotalVolumeForMember(memberId: Long): Flow<Double?> =
+        dao.getTotalVolumeForMember(memberId)
+
+    override fun getWeightProgression(
+        memberId: Long,
+        exerciseId: Long,
+    ): Flow<List<WeightProgressionPointTuple>> =
+        dao.getWeightProgression(memberId, exerciseId)
 
     // ── Mapping ───────────────────────────────────────────────────────────────────
 
     private fun WorkoutSessionEntity.toDomain() = WorkoutSession(
         id = id,
-        memberId = memberId,
         startedAt = startedAt,
-        finishedAt = finishedAt,
-        status = runCatching { SessionStatus.valueOf(status) }.getOrDefault(SessionStatus.IN_PROGRESS),
-        exercises = emptyList(), // Lazy-loaded by ViewModel
+        endedAt = endedAt,
+        pausedTotalMs = pausedTotalMs,
+        status = when (status) {
+            "COMPLETED" -> SessionStatus.COMPLETED
+            "CANCELLED", "DISCARDED" -> SessionStatus.CANCELLED
+            else -> SessionStatus.IN_PROGRESS
+        },
+        notes = notes,
+        participants = emptyList(),
+        exercises = emptyList(),
     )
 
     private fun WorkoutSet.toEntity() = WorkoutSetEntity(
         id = id,
         workoutExerciseId = workoutExerciseId,
+        memberId = memberId,
         setNumber = setNumber,
         reps = reps,
         weightKg = weightKg,
+        isCompleted = isCompleted,
+        completedAt = completedAt,
     )
 }

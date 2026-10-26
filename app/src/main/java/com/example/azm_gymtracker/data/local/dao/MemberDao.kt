@@ -5,14 +5,13 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.example.azm_gymtracker.data.local.entity.MemberEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object for the [MemberEntity] table.
- *
- * All queries return [Flow] for reactive, lifecycle-aware UI updates.
  */
 @Dao
 interface MemberDao {
@@ -25,10 +24,12 @@ interface MemberDao {
     @Query("SELECT * FROM members WHERE id = :id LIMIT 1")
     suspend fun getMemberById(id: Long): MemberEntity?
 
+    @Query("SELECT COUNT(*) FROM members")
+    suspend fun getMemberCount(): Int
+
     /**
      * Inserts a new member.
-     * [OnConflictStrategy.ABORT] ensures that attempting to insert a member with
-     * a duplicate name throws [android.database.sqlite.SQLiteConstraintException].
+     * Duplicate names (case-insensitive) throw SQLiteConstraintException.
      */
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertMember(member: MemberEntity): Long
@@ -38,9 +39,24 @@ interface MemberDao {
     suspend fun updateMember(member: MemberEntity): Int
 
     /**
-     * Deletes a member and (by CASCADE) all their workout sessions, exercises, and sets.
-     * Returns number of deleted rows.
+     * Deletes a member. CASCADE automatically removes their participation records and sets.
      */
     @Delete
     suspend fun deleteMember(member: MemberEntity): Int
+
+    @Query("DELETE FROM members WHERE id = :memberId")
+    suspend fun deleteMemberById(memberId: Long): Int
+
+    /**
+     * Atomically deletes a member and removes any workout sessions left without participants.
+     */
+    @Transaction
+    suspend fun deleteMemberWithCleanup(memberId: Long): Int {
+        val deleted = deleteMemberById(memberId)
+        deleteOrphanSessions()
+        return deleted
+    }
+
+    @Query("DELETE FROM workout_sessions WHERE id NOT IN (SELECT DISTINCT session_id FROM session_participants)")
+    suspend fun deleteOrphanSessions()
 }

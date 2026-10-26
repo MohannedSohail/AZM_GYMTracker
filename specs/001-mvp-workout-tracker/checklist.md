@@ -18,13 +18,20 @@
 
 ---
 
-## 2. Multi-Member & Device Sharing Checklist
-
+## 2. Multi-Member & Group Session Checklist
+ 
 - [ ] **CH-MEM-1**: First launch without members forces initial member creation before dashboard access.
 - [ ] **CH-MEM-2**: Quick member switcher is visible in the top bar across all primary screens.
 - [ ] **CH-MEM-3**: Switching active member immediately filters all history and active workout views to the selected member.
-- [ ] **CH-MEM-4**: Member A and Member B can each maintain an independent `IN_PROGRESS` session simultaneously without data collision.
-- [ ] **CH-MEM-5**: Deleting a member requires confirmation and cascades to permanently delete all their sessions and sets.
+- [ ] **CH-MEM-4**: Deleting a member requires strong confirmation dialog warning of history deletion.
+- [ ] **CH-GRP-1**: Cannot start a session without at least one participant selected (Start button disabled).
+- [ ] **CH-GRP-2**: Every logged set is strictly stored with its owner's `member_id`.
+- [ ] **CH-GRP-3**: Each member's personal history displays their own sets and volume contribution only.
+- [ ] **CH-GRP-4**: Deleting a member deletes their sets and participation while preserving the shared session for remaining participants; sessions left with zero participants are deleted.
+- [ ] **CH-GRP-5**: Turn rotation advances automatically after each logged set, with manual turn switching enabled.
+- [ ] **CH-GRP-6**: Elapsed session timer is calculated from `started_at` minus `paused_total_ms`, surviving process death and device reboots without drifting.
+- [ ] **CH-UI-1**: Zero hardcoded strings or dummy mock numbers in production screens outside test fixtures and previews.
+- [ ] **CH-UI-2**: No "فيديو" badge shown on any exercise; only "مخصص" (Custom) badge is displayed for custom exercises.
 
 ---
 

@@ -91,6 +91,8 @@ import java.util.Locale
  * Features timer controls, multi-participant turn rotation carousel, set queue,
  * and one-handed thumb-zone steppers (±2.5 kg, ±1 rep).
  */
+import androidx.activity.compose.BackHandler
+
 @Composable
 fun ActiveSessionScreen(
     uiState: ActiveSessionUiState,
@@ -102,45 +104,32 @@ fun ActiveSessionScreen(
     onFinishSession: () -> Unit,
     onDiscardSession: () -> Unit,
     onNavigateBack: () -> Unit,
+    onDoneSet: () -> Unit = {},
+    onAdjustWeight: (Float) -> Unit = {},
+    onAdjustReps: (Int) -> Unit = {},
+    onSelectTurn: (Long) -> Unit = {},
+    onSkipRestTimer: () -> Unit = {},
+    onAdjustRestTimer: (Int) -> Unit = {},
+    onPauseSession: () -> Unit = {},
+    onResumeSession: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var isPaused by remember { mutableStateOf(false) }
     var showPauseDialog by remember { mutableStateOf(false) }
     var showFinishDialog by remember { mutableStateOf(false) }
-    var showRestTimer by remember { mutableStateOf(false) }
-    var restSecondsRemaining by remember { mutableIntStateOf(90) }
+    var showExitConfirmDialog by remember { mutableStateOf(false) }
     var showExercisePicker by remember { mutableStateOf(false) }
 
-    // Stepper interactive values for current logging
-    var currentWeight by remember { mutableDoubleStateOf(72.5) }
-    var currentReps by remember { mutableIntStateOf(8) }
-
-    // Session Timer
-    var elapsedSeconds by remember { mutableIntStateOf(0) }
-    LaunchedEffect(isPaused) {
-        while (!isPaused) {
-            delay(1000)
-            elapsedSeconds++
-        }
+    // Intercept hardware and gesture back presses to prevent accidental session loss
+    BackHandler(enabled = true) {
+        showExitConfirmDialog = true
     }
 
-    // Rest Timer Countdown Effect
-    LaunchedEffect(showRestTimer, restSecondsRemaining) {
-        if (showRestTimer && restSecondsRemaining > 0) {
-            delay(1000)
-            restSecondsRemaining--
-        } else if (showRestTimer && restSecondsRemaining == 0) {
-            showRestTimer = false
-            restSecondsRemaining = 90
-        }
-    }
-
-    val formattedTimer = remember(elapsedSeconds) {
-        val minutes = elapsedSeconds / 60
-        val seconds = elapsedSeconds % 60
+    val formattedTimer = remember(uiState.elapsedSeconds) {
+        val minutes = uiState.elapsedSeconds / 60
+        val seconds = uiState.elapsedSeconds % 60
         String.format(Locale.US, "%02d:%02d", minutes, seconds)
     }
 
@@ -167,7 +156,7 @@ fun ActiveSessionScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = if (isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
+                        imageVector = if (uiState.isPaused) Icons.Default.PlayArrow else Icons.Default.Pause,
                         contentDescription = stringResource(R.string.session_pause_action),
                         tint = AzmDarkOnSurface,
                         modifier = Modifier.size(24.dp),
@@ -197,7 +186,7 @@ fun ActiveSessionScreen(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(AzmDarkSurfaceVariant)
-                        .clickable(onClick = onNavigateBack),
+                        .clickable { showExitConfirmDialog = true },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -223,30 +212,22 @@ fun ActiveSessionScreen(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
-                ParticipantTurnChip(
-                    name = "سلمان",
-                    character = "س",
-                    color = Color(0xFF8E9CFF),
-                    isActive = false,
-                )
-                ParticipantTurnChip(
-                    name = "محمد",
-                    character = "م",
-                    color = Color(0xFFFFD177),
-                    isActive = false,
-                )
-                ParticipantTurnChip(
-                    name = "أحمد ✓",
-                    character = "أ",
-                    color = AzmEmeraldGreen,
-                    isActive = true,
-                )
+                uiState.participants.forEach { member ->
+                    val isTurn = member.id == uiState.activeTurnMemberId
+                    ParticipantTurnChip(
+                        name = member.name + if (isTurn) " ✓" else "",
+                        character = member.name.take(1),
+                        color = parseMemberColor(member.colorHex),
+                        isActive = isTurn,
+                        onClick = { onSelectTurn(member.id) },
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Current Exercise Header Card (Figma Node #87:482)
-            val currentExercise = uiState.exercises.firstOrNull()
+            val currentExercise = uiState.currentExercise ?: uiState.sessionWithDetails?.exercises?.firstOrNull()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -276,7 +257,9 @@ fun ActiveSessionScreen(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = currentExercise?.exerciseName ?: "بنش برس بالبار مستوي",
+                        text = currentExercise?.workoutExercise?.exerciseNameSnapshot
+                            ?: currentExercise?.catalogExercise?.nameAr
+                            ?: "بنش برس بالبار مستوي",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = AzmDarkOnSurface,
@@ -287,33 +270,43 @@ fun ActiveSessionScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Set Queue (Figma Node #87:491)
-            Column(
+            val currentExerciseSets = currentExercise?.sets ?: emptyList()
+            val activeTurnMember = uiState.participants.find { it.id == uiState.activeTurnMemberId }
+            val activeMemberTurnSetsCount = currentExerciseSets.count { it.memberId == activeTurnMember?.id }
+            val currentTurnTitle = "${activeTurnMember?.name ?: "متمرن"} • الجولة ${activeMemberTurnSetsCount + 1}"
+
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                // Completed set
-                SetQueueRow(
-                    title = "أحمد • الجولة 1 ✓",
-                    stats = "72.5 × 8",
-                    isCompleted = true,
-                    isActive = false,
-                )
-                // Active current set
-                SetQueueRow(
-                    title = "أحمد • الجولة 2",
-                    stats = "72.5 × 8",
-                    isCompleted = false,
-                    isActive = true,
-                )
-                // Upcoming set
-                SetQueueRow(
-                    title = "محمد • الجولة 3",
-                    stats = stringResource(R.string.round_upcoming),
-                    isCompleted = false,
-                    isActive = false,
-                )
+                items(currentExerciseSets, key = { it.id }) { setItem ->
+                    val member = uiState.participants.find { it.id == setItem.memberId }
+                    val memberName = member?.name ?: "متمرن"
+                    val weightStr = if (setItem.weightKg != null) "${setItem.weightKg}" else "وزن الجسم"
+                    val title = "$memberName • الجولة ${setItem.setNumber} ${if (setItem.isCompleted) "✓" else ""}"
+                    val stats = "$weightStr × ${setItem.reps}"
+
+                    SetQueueRow(
+                        title = title,
+                        stats = stats,
+                        isCompleted = setItem.isCompleted,
+                        isActive = false,
+                        onDelete = { onDeleteSet(setItem.id, currentExercise?.workoutExercise?.id ?: 0L) },
+                    )
+                }
+
+                // Currently active pending set
+                item {
+                    val weightDisplay = if (uiState.weightStepper > 0f) "${uiState.weightStepper}" else "وزن الجسم"
+                    SetQueueRow(
+                        title = currentTurnTitle,
+                        stats = "$weightDisplay × ${uiState.repsStepper}",
+                        isCompleted = false,
+                        isActive = true,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -329,12 +322,16 @@ fun ActiveSessionScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = stringResource(R.string.last_round_hint, "72.5 × 8"),
+                        text = if (uiState.previousSetHint != null) {
+                            stringResource(R.string.last_round_hint, uiState.previousSetHint)
+                        } else {
+                            ""
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = AzmDarkOnSurfaceMuted,
                     )
                     Text(
-                        text = "أحمد • الجولة 2",
+                        text = currentTurnTitle,
                         style = MaterialTheme.typography.titleMedium,
                         color = AzmEmeraldGreen,
                         fontWeight = FontWeight.Bold,
@@ -352,9 +349,9 @@ fun ActiveSessionScreen(
                 }
 
                 StepperControl(
-                    displayValue = String.format(Locale.US, "%.1f", currentWeight),
-                    onDecrease = { currentWeight = (currentWeight - 2.5).coerceAtLeast(0.0) },
-                    onIncrease = { currentWeight += 2.5 },
+                    displayValue = String.format(Locale.US, "%.1f", uiState.weightStepper),
+                    onDecrease = { onAdjustWeight(-2.5f) },
+                    onIncrease = { onAdjustWeight(2.5f) },
                 )
 
                 // Reps Stepper (±1 rep)
@@ -368,17 +365,16 @@ fun ActiveSessionScreen(
                 }
 
                 StepperControl(
-                    displayValue = "$currentReps",
-                    onDecrease = { currentReps = (currentReps - 1).coerceAtLeast(1) },
-                    onIncrease = { currentReps += 1 },
+                    displayValue = "${uiState.repsStepper}",
+                    onDecrease = { onAdjustReps(-1) },
+                    onIncrease = { onAdjustReps(1) },
                 )
 
                 // Primary Action Button: "✓ تم"
                 AzmPrimaryButton(
                     text = stringResource(R.string.action_done),
                     onClick = {
-                        showRestTimer = true
-                        restSecondsRemaining = 90
+                        onDoneSet()
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 message = "تم حفظ الجولة بنجاح",
@@ -396,7 +392,7 @@ fun ActiveSessionScreen(
                     AzmSecondaryButton(
                         text = stringResource(R.string.session_add_round),
                         onClick = {
-                            currentExercise?.let { onAddSet(it.id) }
+                            currentExercise?.let { onAddSet(it.workoutExercise.id) }
                         },
                         modifier = Modifier.weight(1f),
                     )
@@ -426,11 +422,11 @@ fun ActiveSessionScreen(
     }
 
     // Rest Timer Overlay (Figma Node #87:1880)
-    if (showRestTimer) {
+    if (uiState.isRestTimerVisible) {
         RestTimerDialog(
-            remainingSeconds = restSecondsRemaining,
-            onAdjustSeconds = { restSecondsRemaining = (restSecondsRemaining + it).coerceAtLeast(0) },
-            onSkip = { showRestTimer = false },
+            remainingSeconds = uiState.restTimerRemainingSeconds,
+            onAdjustSeconds = { onAdjustRestTimer(it) },
+            onSkip = { onSkipRestTimer() },
         )
     }
 
@@ -457,9 +453,9 @@ fun ActiveSessionScreen(
             },
             confirmButton = {
                 AzmPrimaryButton(
-                    text = if (isPaused) "استئناف التمرين" else stringResource(R.string.session_pause_action),
+                    text = if (uiState.isPaused) "استئناف التمرين" else stringResource(R.string.session_pause_action),
                     onClick = {
-                        isPaused = !isPaused
+                        if (uiState.isPaused) onResumeSession() else onPauseSession()
                         showPauseDialog = false
                     },
                     modifier = Modifier.padding(horizontal = 8.dp),
@@ -468,6 +464,59 @@ fun ActiveSessionScreen(
             dismissButton = {
                 TextButton(onClick = { showPauseDialog = false }) {
                     Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                }
+            },
+        )
+    }
+
+    // Exit & Discard Confirmation Dialog (Back-press protection)
+    if (showExitConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmDialog = false },
+            containerColor = AzmDarkSurface,
+            shape = RoundedCornerShape(32.dp),
+            title = {
+                Text(
+                    text = stringResource(R.string.session_discard_dialog_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = AzmDarkOnSurface,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.session_discard_dialog_msg),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AzmDarkOnSurfaceMuted,
+                )
+            },
+            confirmButton = {
+                AzmPrimaryButton(
+                    text = stringResource(R.string.session_exit_keep_running),
+                    onClick = {
+                        showExitConfirmDialog = false
+                        onNavigateBack()
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            },
+            dismissButton = {
+                Row {
+                    TextButton(
+                        onClick = {
+                            showExitConfirmDialog = false
+                            onDiscardSession()
+                        },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.session_exit_discard),
+                            color = AzmError,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                    TextButton(onClick = { showExitConfirmDialog = false }) {
+                        Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                    }
                 }
             },
         )
@@ -535,6 +584,7 @@ private fun ParticipantTurnChip(
     character: String,
     color: Color,
     isActive: Boolean,
+    onClick: () -> Unit = {},
 ) {
     val bg = if (isActive) AzmDarkSurfaceSelected else AzmDarkSurface
     val border = if (isActive) AzmEmeraldGreen else AzmBorderSubtle
@@ -544,6 +594,7 @@ private fun ParticipantTurnChip(
             .clip(CircleShape)
             .background(bg)
             .border(1.dp, border, CircleShape)
+            .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -569,6 +620,7 @@ private fun SetQueueRow(
     stats: String,
     isCompleted: Boolean,
     isActive: Boolean,
+    onDelete: (() -> Unit)? = null,
 ) {
     val bg = if (isActive) AzmDarkSurfaceSelected else AzmDarkSurfaceVariant
 
@@ -584,18 +636,16 @@ private fun SetQueueRow(
     ) {
         if (isCompleted) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    tint = AzmDarkOnSurfaceMuted,
-                    modifier = Modifier.size(18.dp),
-                )
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = AzmDarkOnSurfaceMuted,
-                    modifier = Modifier.size(18.dp),
-                )
+                if (onDelete != null) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.action_delete),
+                        tint = AzmDarkOnSurfaceMuted,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clickable(onClick = onDelete),
+                    )
+                }
             }
         } else if (isActive) {
             Icon(

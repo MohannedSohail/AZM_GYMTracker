@@ -5,13 +5,20 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Domain contract for member persistence operations.
- * All implementations must guarantee member isolation — each member's data
- * is strictly scoped by their [Member.id].
  */
 interface MemberRepository {
 
     /** Observes all members ordered by creation date (oldest first). */
     fun getAllMembers(): Flow<List<Member>>
+
+    /** Observes the ID of the currently active member profile. */
+    fun getActiveMemberId(): Flow<Long?>
+
+    /** Sets the currently active member profile. */
+    suspend fun setActiveMemberId(memberId: Long)
+
+    /** Returns the total count of created members. */
+    suspend fun getMemberCount(): Int
 
     /**
      * Creates a new member and returns the generated ID.
@@ -27,8 +34,7 @@ interface MemberRepository {
     suspend fun updateMember(member: Member)
 
     /**
-     * Permanently deletes a member and all their associated data (sessions, sets).
-     * This operation is irreversible.
+     * Permanently deletes a member and cleans up orphan sessions.
      */
     suspend fun deleteMember(member: Member)
 }

@@ -20,7 +20,7 @@ data class MemberEntity(
     @ColumnInfo(name = "id")
     val id: Long = 0L,
 
-    @ColumnInfo(name = "name")
+    @ColumnInfo(name = "name", collate = ColumnInfo.NOCASE)
     val name: String,
 
     @ColumnInfo(name = "color_hex")
@@ -28,4 +28,11 @@ data class MemberEntity(
 
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis(),
+)
+
+fun MemberEntity.toDomain() = com.example.azm_gymtracker.domain.model.Member(
+    id = id,
+    name = name,
+    colorHex = colorHex,
+    createdAt = createdAt,
 )

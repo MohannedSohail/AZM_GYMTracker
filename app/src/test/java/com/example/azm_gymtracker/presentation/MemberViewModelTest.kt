@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -54,14 +53,17 @@ class MemberViewModelTest {
     }
 
     @Test
-    fun selectMember_updatesActiveMember() = runTest(testDispatcher) {
+    fun selectMember_updatesActiveMemberAndPersistsId() = runTest(testDispatcher) {
         val member1 = Member(id = 1, name = "Mohanned", colorHex = "#8CFF68")
         val member2 = Member(id = 2, name = "Ahmed", colorHex = "#42E879")
         fakeRepository.emitMembers(listOf(member1, member2))
         advanceUntilIdle()
 
         viewModel.selectMember(member2)
+        advanceUntilIdle()
+
         assertEquals(member2, viewModel.uiState.value.activeMember)
+        assertEquals(2L, fakeRepository.activeMemberIdFlow.value)
     }
 
     @Test
@@ -69,7 +71,7 @@ class MemberViewModelTest {
         viewModel.createMember("   ", "#8CFF68")
         advanceUntilIdle()
 
-        assertEquals("Name cannot be blank", viewModel.uiState.value.nameError)
+        assertEquals("الاسم لا يمكن أن يكون فارغاً", viewModel.uiState.value.nameError)
     }
 
     @Test
@@ -97,6 +99,7 @@ class MemberViewModelTest {
 
     private class FakeMemberRepository : MemberRepository {
         private val _flow = MutableStateFlow<List<Member>>(emptyList())
+        val activeMemberIdFlow = MutableStateFlow<Long?>(null)
         val createdMembers = mutableListOf<Member>()
 
         fun emitMembers(list: List<Member>) {
@@ -104,6 +107,7 @@ class MemberViewModelTest {
         }
 
         override fun getAllMembers(): Flow<List<Member>> = _flow.asStateFlow()
+        override suspend fun getMemberCount(): Int = _flow.value.size
 
         override suspend fun createMember(member: Member): Long {
             createdMembers.add(member)
@@ -118,6 +122,12 @@ class MemberViewModelTest {
 
         override suspend fun deleteMember(member: Member) {
             _flow.value = _flow.value.filter { it.id != member.id }
+        }
+
+        override fun getActiveMemberId(): Flow<Long?> = activeMemberIdFlow.asStateFlow()
+
+        override suspend fun setActiveMemberId(memberId: Long) {
+            activeMemberIdFlow.value = memberId
         }
     }
 }

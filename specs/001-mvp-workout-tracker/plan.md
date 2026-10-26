@@ -99,22 +99,22 @@ graph TD
 
 ---
 
-## 3. Data Model & Database Relationships
+## 3. Data Model & Database Relationships (Schema v2)
 
 ### Relational Schema (Room SQLite)
 
 ```
-Member (1) ────< (N) WorkoutSession (1) ────< (N) WorkoutExercise (1) ────< (N) WorkoutSet
-                      ^
-                      | (references)
-Exercise (1) ─────────┘
+Member (1) ──< (N) SessionParticipant (N) >── (1) WorkoutSession (1) ──< (N) WorkoutExercise (1) ──< (N) WorkoutSet
+                                                                                                       │
+Member (1) ─────────────────────────────────────────────────────────────────────────────< (N) ───────┘ (member_id)
+Exercise (1) ──< (N) WorkoutExercise
 ```
 
 #### Table Definitions:
 
 1. **`members`**:
    - `id`: `INTEGER PRIMARY KEY AUTOINCREMENT`
-   - `name`: `TEXT NOT NULL` (Unique index `index_members_name` COLLATE NOCASE)
+   - `name`: `TEXT NOT NULL` (Unique index `index_members_name` with `@ColumnInfo(collate = ColumnInfo.NOCASE)`)
    - `color_hex`: `TEXT NOT NULL`
    - `created_at`: `INTEGER NOT NULL`
 2. **`exercises`**:
@@ -126,28 +126,61 @@ Exercise (1) ─────────┘
    - `creator_member_id`: `INTEGER` (Foreign Key -> `members(id)` `ON DELETE SET NULL`)
 3. **`workout_sessions`**:
    - `id`: `INTEGER PRIMARY KEY AUTOINCREMENT`
-   - `member_id`: `INTEGER NOT NULL` (Foreign Key -> `members(id)` `ON DELETE CASCADE`)
    - `status`: `TEXT NOT NULL` (`IN_PROGRESS`, `COMPLETED`, `CANCELLED`)
    - `started_at`: `INTEGER NOT NULL`
    - `ended_at`: `INTEGER`
+   - `paused_total_ms`: `INTEGER NOT NULL DEFAULT 0`
    - `notes`: `TEXT`
-   - **Composite Index**: `(member_id, status)` for instant `IN_PROGRESS` query lookups.
-4. **`workout_exercises`**:
+   - **Index**: `(status)` for instant `IN_PROGRESS` query lookups across device.
+4. **`session_participants`**:
+   - `session_id`: `INTEGER NOT NULL` (Foreign Key -> `workout_sessions(id)` `ON DELETE CASCADE`)
+   - `member_id`: `INTEGER NOT NULL` (Foreign Key -> `members(id)` `ON DELETE CASCADE`)
+   - `join_order`: `INTEGER NOT NULL DEFAULT 0`
+   - **Primary Key**: Composite `(session_id, member_id)`
+   - **Indices**: `session_id`, `member_id`
+5. **`workout_exercises`**:
    - `id`: `INTEGER PRIMARY KEY AUTOINCREMENT`
    - `workout_id`: `INTEGER NOT NULL` (Foreign Key -> `workout_sessions(id)` `ON DELETE CASCADE`)
    - `exercise_id`: `INTEGER NOT NULL` (Foreign Key -> `exercises(id)` `ON DELETE RESTRICT`)
    - `order_index`: `INTEGER NOT NULL`
-5. **`workout_sets`**:
+6. **`workout_sets`**:
    - `id`: `INTEGER PRIMARY KEY AUTOINCREMENT`
    - `workout_exercise_id`: `INTEGER NOT NULL` (Foreign Key -> `workout_exercises(id)` `ON DELETE CASCADE`)
+   - `member_id`: `INTEGER NOT NULL` (Foreign Key -> `members(id)` `ON DELETE CASCADE`)
    - `set_number`: `INTEGER NOT NULL`
    - `repetitions`: `INTEGER NOT NULL` (Range: 1–999)
    - `weight_kg`: `REAL` (Range: 0.0–999.5; NULL or 0.0 = bodyweight)
    - `is_completed`: `INTEGER NOT NULL DEFAULT 0`
+   - `completed_at`: `INTEGER`
+   - **Indices**: `workout_exercise_id`, `(workout_exercise_id, member_id)`
+7. **`app_settings`**:
+   - `key`: `TEXT PRIMARY KEY NOT NULL`
+   - `value`: `TEXT NOT NULL`
 
 ---
 
-## 4. Repository Contracts & Business Rules
+## 4. Migration Strategy (v1 -> v2) & Data Integrity
+
+### Room Migration 1 -> 2 (Executed in SQLite Transaction):
+1. Create table `session_participants` and populate it from v1 data:
+   `INSERT INTO session_participants (session_id, member_id, join_order) SELECT id, member_id, 0 FROM workout_sessions;`
+2. Rebuild table `workout_sets` with non-nullable `member_id` (derived via `workout_exercises` -> `workout_sessions.member_id`), `is_completed`, and `completed_at`.
+3. Rebuild table `workout_sessions` removing `member_id`, adding `paused_total_ms` (default 0) and `notes`, and mapping any existing `DISCARDED` status to `CANCELLED`.
+4. Create table `app_settings` (key TEXT PRIMARY KEY, value TEXT).
+5. Ensure `PRAGMA foreign_key_check` executes and passes in automated migration tests.
+6. `fallbackToDestructiveMigration()` is strictly forbidden.
+
+### Core Query & Integrity Rules:
+- **Active Session Query**: `SELECT * FROM workout_sessions WHERE status = 'IN_PROGRESS' LIMIT 1` (device-wide single active session).
+- **Session Finalization/Cancellation**: Executed strictly via `UPDATE workout_sessions SET status = :status, ended_at = :endedAt WHERE id = :sessionId`.
+- **Atomic Index Calculation**: `order_index` for exercises and `set_number` for sets are calculated inside `@Transaction` blocks as `COALESCE(MAX(order_index), 0) + 1` and `COALESCE(MAX(set_number), 0) + 1`.
+- **Orphan Session Cleanup**: After a member is deleted:
+  `DELETE FROM workout_sessions WHERE id NOT IN (SELECT session_id FROM session_participants);`
+- **Elapsed Timer Recovery**: Calculated dynamically from `(currentTime - startedAt - pausedTotalMs)` to survive process death and reboot without drifting.
+
+---
+
+## 5. Repository Contracts & Business Rules
 
 ### Repository Interfaces (`domain/repository/`)
 
@@ -169,60 +202,22 @@ interface ExerciseRepository {
 }
 
 interface WorkoutRepository {
-    fun getActiveSession(memberId: Long): Flow<WorkoutSessionWithExercises?>
-    fun getCompletedSessions(memberId: Long): Flow<List<WorkoutSessionSummary>>
-    fun getSessionDetail(sessionId: Long): Flow<WorkoutSessionWithExercises?>
-    suspend fun startWorkout(memberId: Long): Long
+    fun getActiveSession(): Flow<WorkoutSessionWithDetails?>
+    fun getCompletedSessionsForMember(memberId: Long): Flow<List<WorkoutSessionSummary>>
+    fun getSessionDetail(sessionId: Long): Flow<WorkoutSessionWithDetails?>
+    fun getProgressStats(memberId: Long, timeRange: TimeRange): Flow<MemberProgressStats>
+    suspend fun startSession(participantIds: List<Long>): Long
+    suspend fun addParticipantToSession(sessionId: Long, memberId: Long)
     suspend fun addExerciseToSession(sessionId: Long, exerciseId: Long): Long
-    suspend fun addSet(workoutExerciseId: Long, reps: Int, weightKg: Double?): Long
+    suspend fun addSet(workoutExerciseId: Long, memberId: Long, reps: Int, weightKg: Double?): Long
     suspend fun updateSet(setId: Long, reps: Int, weightKg: Double?, isCompleted: Boolean)
     suspend fun deleteSet(setId: Long, workoutExerciseId: Long)
     suspend fun removeExerciseFromSession(workoutExerciseId: Long)
-    suspend fun finishWorkout(sessionId: Long)
-    suspend fun discardWorkout(sessionId: Long)
-    suspend fun deletePastWorkout(sessionId: Long)
+    suspend fun finishSession(sessionId: Long)
+    suspend fun cancelSession(sessionId: Long)
+    suspend fun deleteSession(sessionId: Long)
 }
 ```
-
-### Core Business Rules Enforced in Domain:
-- **`MemberNameValidator`**: Checks non-blank, trimmed length 1..50 characters, and regex preventing special control characters.
-- **`RepValidator`**: Integer between 1 and 999.
-- **`WeightValidator`**: Number between 0.0 and 999.5 kg in 0.25/0.5 kg increments. Blank or 0.0 converts to `null` (bodyweight).
-- **`Automatic Set Re-indexing`**: When `deleteSet` is invoked inside a database transaction, all sets with `set_number > deletedSetNumber` under that `workout_exercise_id` are decremented by 1.
-
----
-
-## 5. State Management & Error Handling
-
-### UI State Contracts (`ui/`)
-- All ViewModels expose an immutable `StateFlow<TUiState>`.
-- States follow exhaustive sealed interfaces:
-  ```kotlin
-  data class DashboardUiState(
-      val isLoading: Boolean = false,
-      val activeMember: Member? = null,
-      val allMembers: List<Member> = emptyList(),
-      val activeWorkout: WorkoutSessionSummary? = null,
-      val recentWorkouts: List<WorkoutSessionSummary> = emptyList(),
-      val errorMessage: String? = null
-  )
-  ```
-- **Error Handling**: Inline error messages under text input fields for validation errors; temporary snackbars for unexpected persistence exceptions.
-- **Empty States**: Dedicated, friendly empty states with localized illustrations/icons for:
-  - No members created yet.
-  - No exercises matching search query.
-  - No past workouts recorded yet.
-  - No sets added yet in active workout.
-
----
-
-## 6. Database Migrations & Data Integrity
-
-- **Database Version**: `version = 1` for initial release.
-- **Integrity Rule 1 (Foreign Key Cascades)**: Room SQLite foreign key constraints are enabled by default (`RoomDatabase.Builder.setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)`). Deleting a member cascades to their workout sessions and sets automatically.
-- **Integrity Rule 2 (Transaction Safety)**: Complex multi-row modifications (finishing workout, discarding session, deleting sets with re-indexing) execute within `@Transaction` blocks in DAOs.
-- **Integrity Rule 3 (Concurrent Active Sessions)**: Queries for active sessions always filter by `WHERE member_id = :memberId AND status = 'IN_PROGRESS' LIMIT 1`, allowing each member to safely maintain their own active session without collisions.
-- **Future Migration Policy**: In future updates, explicit `Migration(from, to)` classes will be tested; `fallbackToDestructiveMigration()` is strictly disabled for production builds.
 
 ---
 

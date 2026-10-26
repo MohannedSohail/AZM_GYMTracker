@@ -28,6 +28,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,8 @@ fun SplashScreen(
     onSplashFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val currentOnSplashFinished by androidx.compose.runtime.rememberUpdatedState(onSplashFinished)
+
     val logoScale = remember { Animatable(0.3f) }
     val logoAlpha = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(0f) }
@@ -110,7 +113,7 @@ fun SplashScreen(
 
         // Step 3: Wait and trigger smooth exit transition
         delay(1400)
-        onSplashFinished()
+        currentOnSplashFinished()
     }
 
     Surface(

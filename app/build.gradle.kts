@@ -52,8 +52,9 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
-    // Lifecycle ViewModel Compose
+    // Lifecycle ViewModel & Runtime Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     // Test
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

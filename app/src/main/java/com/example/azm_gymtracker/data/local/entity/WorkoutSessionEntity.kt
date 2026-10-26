@@ -2,50 +2,42 @@ package com.example.azm_gymtracker.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Room entity for a workout session owned by a single member.
+ * Room entity for a workout session.
  *
- * Foreign key: [memberId] → [MemberEntity.id] with CASCADE delete so that
- * deleting a member automatically removes all their workout sessions (and
- * by cascade, all exercises and sets within those sessions).
+ * Supports multi-participant shared sessions on a single device.
+ * Participants are linked via [SessionParticipantEntity].
  *
- * Index on `(member_id, status)` enables efficient lookup of a member's
- * active in-progress session without a full table scan.
+ * Index on `status` enables fast query of the single active session (`IN_PROGRESS`).
  */
 @Entity(
     tableName = "workout_sessions",
-    foreignKeys = [
-        ForeignKey(
-            entity = MemberEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["member_id"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
-    indices = [Index(value = ["member_id", "status"])],
+    indices = [Index(value = ["status"])],
 )
 data class WorkoutSessionEntity(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Long = 0L,
 
-    @ColumnInfo(name = "member_id")
-    val memberId: Long,
-
     @ColumnInfo(name = "started_at")
     val startedAt: Long = System.currentTimeMillis(),
 
-    @ColumnInfo(name = "finished_at")
-    val finishedAt: Long? = null,
+    @ColumnInfo(name = "ended_at")
+    val endedAt: Long? = null,
+
+    @ColumnInfo(name = "paused_total_ms", defaultValue = "0")
+    val pausedTotalMs: Long = 0L,
 
     /**
-     * Lifecycle status stored as a string enum name.
-     * Valid values: "IN_PROGRESS", "COMPLETED", "DISCARDED".
+     * Lifecycle status stored as string:
+     * "IN_PROGRESS", "COMPLETED", "CANCELLED".
      */
     @ColumnInfo(name = "status")
     val status: String = "IN_PROGRESS",
+
+    @ColumnInfo(name = "notes")
+    val notes: String? = null,
 )

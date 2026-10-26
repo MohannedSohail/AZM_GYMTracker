@@ -22,7 +22,7 @@ class AppContainer(application: Application) {
 
     private val database: AZMDatabase = AZMDatabase.getInstance(application)
 
-    val memberRepository: MemberRepository = MemberRepositoryImpl(database.memberDao())
+    val memberRepository: MemberRepository = MemberRepositoryImpl(database.memberDao(), database.appSettingDao())
     val exerciseRepository: ExerciseRepository = ExerciseRepositoryImpl(database.exerciseDao())
     val workoutRepository: WorkoutRepository = WorkoutRepositoryImpl(database.workoutDao())
 }

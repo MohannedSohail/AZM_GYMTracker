@@ -36,7 +36,7 @@
 - `REQ-MEM-004`: The system shall maintain one active member context at any given time.
 - `REQ-MEM-005`: Switching the active member shall instantly update the active dashboard, session state, and history views to only display data belonging to that member.
 - `REQ-MEM-006`: When the application is launched for the first time with zero members, the system shall show an onboarding screen requiring the creation of the initial member profile before navigating to the main dashboard.
-- `REQ-MEM-007`: **Clarified Deletion Behavior**: Deleting a member profile requires explicit confirmation via a destructive alert dialog. Upon confirmation, the system executes an immediate permanent hard delete with cascading removal of all workout sessions, workout exercises, and sets owned by that member. If other members remain, the active context automatically switches to another profile; if zero members remain, the onboarding flow is triggered.
+- `REQ-MEM-007`: **Clarified Deletion Behavior**: Deleting a member profile requires explicit confirmation via a destructive alert dialog. Upon confirmation, the system removes that member's participation and logged sets. Workout sessions left with zero participants are automatically deleted. If other members remain, the active context automatically switches to another profile; if zero members remain, the onboarding flow is triggered.
 
 ### 3.2 Exercise Catalog (`REQ-CAT`)
 - `REQ-CAT-001`: The system shall provide a categorized catalog of exercises grouped by muscle target:
@@ -50,28 +50,35 @@
 - `REQ-CAT-003`: Preloaded standard exercises shall be protected from deletion or accidental modification.
 - `REQ-CAT-004`: The system shall allow users to add custom exercises by supplying a required name (1–50 characters) and selecting a target muscle group.
 - `REQ-CAT-005`: Custom exercises shall be searchable and filterable alongside standard exercises.
+- `REQ-CAT-006`: Video demonstrations are out of scope for MVP; the only badge displayed on exercise items shall be "مخصص" (Custom) for user-created exercises.
 
 ### 3.3 Active Workout Session & Concurrent Multi-Member Lifecycle (`REQ-SES`)
-- `REQ-SES-001`: A workout session shall be explicitly started by tapping "Start Workout" under the active member profile.
+- `REQ-SES-001`: A workout session shall be explicitly started by selecting participants and tapping "Start Session" / "بدء الجلسة".
 - `REQ-SES-002`: The session shall record a `started_at` timestamp and maintain an active lifecycle status (`IN_PROGRESS`).
-- `REQ-SES-003`: **Clarified Multi-Member Concurrency**: The system shall permit concurrent in-progress sessions across different members (at most one `IN_PROGRESS` session per member). If Member A has an active session and the user switches to Member B, Member A's session remains saved in `IN_PROGRESS` state. Member B can start or resume their own independent workout session without interfering with Member A.
-- `REQ-SES-004`: **Clarified Restart & Interruption Landing**: When the application launches after being closed, terminated by the OS, or rebooted while a workout is `IN_PROGRESS` for the active member, the app shall land on the **Dashboard** displaying a prominent hero card: *"Resume In-Progress Workout"* with elapsed duration, current exercise count, and a direct "Resume Workout" button.
+- `REQ-SES-003`: **Single Active In-Progress Session per Device**: The system shall permit exactly one `IN_PROGRESS` session per device at any time. The session includes 1..N participants selected prior to starting, and additional participants may be added during the session. Individual sessions are simply single-participant sessions.
+- `REQ-SES-004`: **Clarified Restart & Interruption Landing**: When the application launches after being closed, terminated by the OS, or rebooted while a workout is `IN_PROGRESS`, the app shall land on the **Dashboard** displaying a prominent hero card: *"Resume In-Progress Workout"* with elapsed duration, participant chips, current exercise count, and a direct "Resume Workout" button.
 - `REQ-SES-005`: Exercises added to a session shall be rendered in the order added, each appearing as a distinct card with an option to remove the exercise from the active session.
 - `REQ-SES-006`: Users shall be able to finalize a session ("Finish Workout"), which sets the `ended_at` timestamp, changes the status to `COMPLETED`, and saves all logged sets.
-- `REQ-SES-007`: Users shall be able to cancel/discard an in-progress session with confirmation; discarding shall permanently remove all uncompleted sets and prevent the session from appearing in history.
+- `REQ-SES-007`: Users shall be able to cancel/discard an in-progress session with confirmation; discarding shall permanently remove all uncompleted sets and mark status as `CANCELLED`.
+- `REQ-SES-008`: The active session shall display the participant currently taking their turn (Turn Indicator) with the ability to switch turns manually. After saving a set, the turn automatically advances to the next participant.
+- `REQ-SES-009`: Continuous workout duration shall be calculated from `started_at` minus cumulative `paused_total_ms`, guaranteeing accurate elapsed time across process death and app restarts.
 
 ### 3.4 Set Logging, Bodyweight Sets & Validation (`REQ-SET`)
 - `REQ-SET-001`: Under each exercise card in an active session, users shall be able to add sets sequentially (Set 1, Set 2, Set 3...).
 - `REQ-SET-002`: Each set shall record:
   - `set_number`: Sequential integer (1, 2, 3...).
+  - `member_id`: Non-nullable identifier of the participant who performed the set.
   - `repetitions`: Required positive integer between `1` and `999`.
   - `weight_kg`: Optional positive decimal/integer between `0.0` and `999.5` kg (rounded to nearest 0.25/0.5 kg).
   - `is_completed`: Boolean flag indicating whether the set was finished.
+  - `completed_at`: Timestamp when the set was marked completed.
 - `REQ-SET-003`: **Clarified Bodyweight Handling**: If `weight_kg` is left blank or entered as `0` kg, the set is treated as a bodyweight set. In set rows, historical summaries, and volume calculations, it shall display repetitions only (e.g. `"12 reps"` / `"12 تكرار"`), omitting `0.0 kg` to avoid clutter.
 - `REQ-SET-004`: When tapping "Add Set", the input fields shall pre-fill values from the immediately preceding set of that exercise to enable rapid one-tap logging.
 - `REQ-SET-005`: Non-numeric characters or negative values in repetitions and weight inputs shall be rejected with immediate visual feedback.
 - `REQ-SET-006`: Users shall be able to delete an individual set from an exercise card. Upon deletion, subsequent set numbers shall automatically re-index (e.g., deleting Set 2 changes Set 3 into Set 2).
 - `REQ-SET-007`: Users shall be able to edit repetitions or weight of an existing logged set before finalizing the workout.
+- `REQ-SET-008`: Each logged set strictly belongs to the specific participant (`member_id`) who performed it and cannot be transferred to another participant.
+- `REQ-SET-009`: Stepper values for weight (step `±2.5`) and reps (step `±1`) shall initialize from the active participant's last set in that exercise; if none exists, from the last logged set in the exercise.
 
 ### 3.5 Workout History & Review (`REQ-HIS`)
 - `REQ-HIS-001`: The system shall present a chronological timeline of completed workouts filtered strictly by the currently active member.
@@ -79,6 +86,8 @@
 - `REQ-HIS-003`: Tapping a session shall open a detailed review screen showing every exercise and set logged.
 - `REQ-HIS-004`: Users shall be able to delete a past session with explicit confirmation.
 - `REQ-HIS-005`: Users shall be able to edit set repetitions or weights in past sessions to rectify historical recording errors.
+- `REQ-HIS-006`: A member's history view shows sessions in which they participated, displaying their own sets and volume contribution only. Filter controls allow viewing other participants' sets in shared sessions.
+- `REQ-HIS-007`: The Workout Summary screen displays total duration, volume, sets count, personal records (PRs), and individual volume breakdowns for each participant.
 
 ### 3.6 Arabic RTL & Accessibility (`REQ-RTL`)
 - `REQ-RTL-001`: The application shall support full bidirectional mirroring when the device or app language is set to Arabic (`ar`).
@@ -92,17 +101,17 @@
 ## 4. Entity Relationships & Field Specifications
 
 ```
-Member (1) ────< (N) WorkoutSession (1) ────< (N) WorkoutExercise (1) ────< (N) WorkoutSet
-                      ^
-                      | (references)
-Exercise (1) ─────────┘
+Member (1) ──< (N) SessionParticipant (N) >── (1) WorkoutSession (1) ──< (N) WorkoutExercise (1) ──< (N) WorkoutSet
+                                                                                                       │
+Member (1) ─────────────────────────────────────────────────────────────────────────────< (N) ───────┘ (member_id)
+Exercise (1) ──< (N) WorkoutExercise
 ```
 
 ### Entity: Member
 | Field | Type | Required? | Constraints / Notes |
 | :--- | :--- | :---: | :--- |
 | `id` | Identifier | Yes | Unique system identifier |
-| `name` | String | Yes | 1–50 characters, trimmed, unique |
+| `name` | String | Yes | 1–50 characters, trimmed, unique NOCASE |
 | `color_hex` | String | Yes | Hex color string (e.g. `#4CAF50`) |
 | `created_at` | Timestamp | Yes | Creation time in ms |
 
@@ -120,11 +129,19 @@ Exercise (1) ─────────┘
 | Field | Type | Required? | Constraints / Notes |
 | :--- | :--- | :---: | :--- |
 | `id` | Identifier | Yes | Unique system identifier |
-| `member_id` | Identifier | Yes | Owner member (Cascade on member delete) |
 | `status` | Enum | Yes | `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
 | `started_at` | Timestamp | Yes | Session start time in ms |
 | `ended_at` | Timestamp | No | Set upon workout completion |
+| `paused_total_ms` | Long | Yes | Cumulative paused time in ms (default 0) |
 | `notes` | String | No | Optional workout notes |
+
+### Entity: SessionParticipant
+| Field | Type | Required? | Constraints / Notes |
+| :--- | :--- | :---: | :--- |
+| `session_id` | Identifier | Yes | FK -> WorkoutSession (CASCADE) |
+| `member_id` | Identifier | Yes | FK -> Member (CASCADE) |
+| `join_order` | Integer | Yes | 0-indexed join/display order |
+| *Composite PK* | (`session_id`, `member_id`) | Yes | Primary key |
 
 ### Entity: WorkoutExercise
 | Field | Type | Required? | Constraints / Notes |
@@ -139,19 +156,27 @@ Exercise (1) ─────────┘
 | :--- | :--- | :---: | :--- |
 | `id` | Identifier | Yes | Unique system identifier |
 | `workout_exercise_id` | Identifier | Yes | Parent workout exercise (Cascade) |
+| `member_id` | Identifier | Yes | FK -> Member (CASCADE) |
 | `set_number` | Integer | Yes | 1-indexed sequential number |
 | `repetitions` | Integer | Yes | Min: 1, Max: 999 |
 | `weight_kg` | Decimal | No | Min: 0.0, Max: 999.5. Null or 0 = Bodyweight |
 | `is_completed` | Boolean | Yes | Default: `false` until logged |
+| `completed_at` | Timestamp | No | Time marked completed |
+
+### Entity: AppSetting
+| Field | Type | Required? | Constraints / Notes |
+| :--- | :--- | :---: | :--- |
+| `key` | String | Yes | Primary key |
+| `value` | String | Yes | Setting string value (e.g. active member id) |
 
 ---
 
 ## 5. Acceptance Scenarios (Given / When / Then)
 
-### Scenario A: Multi-Member Concurrent In-Progress Sessions
-- **Given** Member "Ahmed" has an in-progress workout with 2 completed sets.
-- **When** Ahmed switches the active member to "Omar" and Omar starts a workout session.
-- **Then** Omar's new session is started without affecting Ahmed's session; when switching back to Ahmed, his in-progress workout is ready to be resumed with its 2 completed sets intact.
+### Scenario A: Multi-Member Shared Session
+- **Given** Ahmed and Omar select their profiles and start a shared workout session.
+- **When** Ahmed logs Set 1 with 72.5 kg × 8 reps on Bench Press, and Omar logs Set 2 with 60.0 kg × 8 reps on the same exercise.
+- **Then** exactly one active session exists on the device; both sets are stored under their respective owners' `member_id`; Ahmed's personal history displays his set only; and the Workout Summary displays each participant's individual volume separately.
 
 ### Scenario B: Interrupted App Reopen
 - **Given** an active workout session is in progress for the active member.
@@ -163,10 +188,10 @@ Exercise (1) ─────────┘
 - **When** the user logs Set 1 with 12 reps and leaves the weight field blank.
 - **Then** Set 1 is saved as completed and displays as `"12 reps"` / `"12 تكرار"` without any awkward `0.0 kg` label.
 
-### Scenario D: Member Permanent Cascade Deletion
-- **Given** Member "Layla" has 4 past workouts and 1 active in-progress workout.
-- **When** the user deletes Layla's profile and confirms the permanent deletion dialog.
-- **Then** Layla's profile, all 4 past workouts, the active workout, and all associated sets are permanently deleted from the database.
+### Scenario D: Member Deletion in Shared Sessions
+- **Given** Member "Omar" participates in a shared session with "Ahmed".
+- **When** the user confirms deleting Omar's profile.
+- **Then** Omar's profile, his participation record, and his individual sets are deleted, but the shared session remains with Ahmed's sets intact. If Omar was the sole participant of a session, that session is deleted completely.
 
 ### Scenario E: Arabic RTL Decimal Weight Formatting
 - **Given** the app language is set to Arabic (`ar`).

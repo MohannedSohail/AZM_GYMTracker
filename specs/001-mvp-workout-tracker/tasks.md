@@ -8,100 +8,68 @@
 
 ---
 
-## Milestone 1: Toolchain & Dependency Integration
+## Milestone 0: Amendments & Baseline Alignment (Current Phase)
 
-- [ ] **TASK-1.1**: Update version catalog [`gradle/libs.versions.toml`](file:///e:/AI%20Projects/AZM_GYMTracker/gradle/libs.versions.toml) with Room (`2.6.1`), KSP (`2.2.10-2.0.2`), Navigation Compose (`2.8.8`), Lifecycle ViewModel Compose (`2.8.7`), and Coroutines Test (`1.10.1`).
-- [ ] **TASK-1.2**: Update root [`build.gradle.kts`](file:///e:/AI%20Projects/AZM_GYMTracker/build.gradle.kts) to register KSP plugin.
-- [ ] **TASK-1.3**: Update [`app/build.gradle.kts`](file:///e:/AI%20Projects/AZM_GYMTracker/app/build.gradle.kts) to apply KSP plugin and add Room, Navigation, ViewModel, and Coroutines Test dependencies.
-- [ ] **TASK-1.4**: Run `./gradlew help` to verify clean Gradle configuration without classpath or version conflicts.
-
----
-
-## Milestone 2: Domain Layer & Room Persistence
-
-- [ ] **TASK-2.1**: Implement pure domain models:
-  - `Member.kt` (id, name, colorHex, createdAt).
-  - `Exercise.kt` (id, nameEn, nameAr, category, isCustom, creatorMemberId) and `MuscleCategory` enum.
-  - `WorkoutSession.kt`, `WorkoutExercise.kt`, `WorkoutSet.kt`.
-- [ ] **TASK-2.2**: Implement pure domain validators:
-  - `MemberNameValidator.kt` (1–50 trimmed chars, non-blank).
-  - `RepValidator.kt` (1–999 positive integer).
-  - `WeightValidator.kt` (0.0–999.5 kg or null for bodyweight).
-  - `WeightFormatter.kt` (bilingual set formatting, bodyweight reps-only display, LTR decimal formatting).
-- [ ] **TASK-2.3**: Write unit tests for domain validators in `app/src/test/java/com/example/azm_gymtracker/domain/`:
-  - `MemberNameValidatorTest.kt`
-  - `RepValidatorTest.kt`
-  - `WeightValidatorTest.kt`
-  - `WeightFormatterTest.kt`
-- [ ] **TASK-2.4**: Create Room Entities:
-  - `MemberEntity.kt` (unique index on name).
-  - `ExerciseEntity.kt`.
-  - `WorkoutSessionEntity.kt` (foreign key to member with `CASCADE`, index on `member_id, status`).
-  - `WorkoutExerciseEntity.kt` (foreign keys to session with `CASCADE` and exercise with `RESTRICT`).
-  - `WorkoutSetEntity.kt` (foreign key to workout exercise with `CASCADE`).
-- [ ] **TASK-2.5**: Create Room DAOs:
-  - `MemberDao.kt` (getAll, insert, update, delete).
-  - `ExerciseDao.kt` (getAll, getByCategory, insert, search).
-  - `WorkoutDao.kt` (getActiveSession, getHistory, insertSession, insertSet, deleteSetWithReindex, finishWorkout).
-- [ ] **TASK-2.6**: Create `AZMDatabase.kt` with Room pre-population callback bundling standard gym exercises (Bench Press, Squat, Deadlift, Overhead Press, Pull-ups, Bicep Curls, etc. in English and Arabic).
-- [ ] **TASK-2.7**: Write in-memory Room DAO tests in `app/src/test/java/com/example/azm_gymtracker/data/`:
-  - `MemberDaoTest.kt` (CRUD, unique name check).
-  - `WorkoutDaoTest.kt` (Concurrent `IN_PROGRESS` session queries, cascade deletion, set re-indexing).
+- [x] **TASK-0.1**: Update `constitution.md`, `spec.md`, and `plan.md` with multi-participant shared session architecture, Schema v2, and locked decisions (D1–D5).
+- [x] **TASK-0.2**: Inspect Figma (Node `87:125`), verify green emerald/neon color palette (`#06110D`, `#3FE779`, `#8CFF68`), verify steppers are strictly `±2.5` for weight and `±1` for reps, and document screen-to-composable gap matrix.
+- [ ] **TASK-0.3**: Add Thmanyah (ثمانية) font family (`400/500/700/900`) to `res/font/` with license documentation, and wire into `Type.kt`.
 
 ---
 
-## Milestone 3: Repository Pattern & ViewModels
+## Milestone 1: Data Layer v2 (Room Persistence & Migrations)
 
-- [ ] **TASK-3.1**: Create Domain Repository interfaces (`MemberRepository`, `ExerciseRepository`, `WorkoutRepository`).
-- [ ] **TASK-3.2**: Implement Repository classes in `data/repository/` (`MemberRepositoryImpl`, `ExerciseRepositoryImpl`, `WorkoutRepositoryImpl`).
-- [ ] **TASK-3.3**: Create Manual Dependency Injection Container (`AppContainer.kt`) inside application class.
-- [ ] **TASK-3.4**: Implement `MemberViewModel.kt` with immutable `MemberUiState` (active member selection, creation, permanent cascading deletion).
-- [ ] **TASK-3.5**: Implement `ActiveSessionViewModel.kt` with immutable `ActiveSessionUiState` (start workout, add exercise, add/update/delete set, previous set pre-filling, finish, discard).
-- [ ] **TASK-3.6**: Implement `HistoryViewModel.kt` with immutable `HistoryUiState` (query completed workouts, calculate total volume, delete past workout).
-- [ ] **TASK-3.7**: Write unit tests for ViewModels using `StandardTestDispatcher` and `kotlinx-coroutines-test`.
+- [x] **TASK-1.1**: Create `SessionParticipantEntity` and `AppSettingEntity`; update `WorkoutSessionEntity` (remove `member_id`, add `paused_total_ms`, `notes`, `CANCELLED` status) and `WorkoutSetEntity` (add non-nullable `member_id`, `completed_at`, `is_completed`). Update `MemberEntity` with `collate = ColumnInfo.NOCASE` on `name`.
+- [x] **TASK-1.2**: Implement `Migration(1, 2)` inside an explicit SQLite transaction (creating `session_participants` from existing sessions, rebuilding `workout_sets` and `workout_sessions`, creating `app_settings`) and test migration with realistic v1 data without destructive fallback.
+- [x] **TASK-1.3**: Fix exercise pre-population using `RoomDatabase.Callback.onCreate(db)` with direct SQLite `INSERT` statements; add unit test proving catalog exercises exist on initial DB creation.
+- [x] **TASK-1.4**: Update DAOs with real `UPDATE` statements for finish/cancel (`ended_at`), real `DELETE` for sessions, atomic `@Transaction` calculations for `nextOrderIndex` and `nextSetNumber`, `@Relation` models (`SessionWithExercisesAndSets` with participants), and aggregate queries (total volume, per-participant volume, PRs, weekly session counts, weight progression timelines).
+- [x] **TASK-1.5**: Implement executable DAO tests covering participant isolation, foreign key cascades, orphan session deletion when all participants are removed, set re-indexing, and DB reopening across process death.
 
 ---
 
-## Milestone 4: Jetpack Compose UI & Navigation Flow
+## Milestone 2: Repositories & ViewModels
 
-- [ ] **TASK-4.1**: Create type-safe navigation graph (`NavRoutes.kt`, `AppNavHost.kt`).
-- [ ] **TASK-4.2**: Build `OnboardingScreen.kt` for initial launch when 0 members exist.
-- [ ] **TASK-4.3**: Build `DashboardScreen.kt`:
-  - Active member top bar with quick switcher dialog.
-  - "Resume In-Progress Workout" hero banner (when an active session exists).
-  - "Start Workout" primary hero button.
-  - Recent workout summary card.
-- [ ] **TASK-4.4**: Build `ActiveSessionScreen.kt`:
-  - Elapsed workout timer.
-  - Exercise cards list.
-  - Set rows (Set #, previous set values, reps field, weight field, checkmark complete button).
-  - Finish and Discard dialogs.
-- [ ] **TASK-4.5**: Build `ExercisePickerSheet.kt`:
-  - Muscle group category filter chips (Chest, Back, Legs, Shoulders, Arms, Core).
-  - Search bar.
-  - Exercise list with localized names.
-  - Custom exercise creation dialog.
-- [ ] **TASK-4.6**: Build `HistoryScreen.kt` and `HistoryDetailScreen.kt`:
-  - Chronological workout list.
-  - Total volume (kg) and duration badges.
-  - Exercise and set detail view with inline set editing and delete workout option.
+- [x] **TASK-2.1**: Update `WorkoutRepository` contract and implementation to handle multi-participant session lifecycle (`startSession(participantIds)`, `addSet(memberId, ...)`, reactive full-session flows, and member-filtered history/progress statistics).
+- [x] **TASK-2.2**: Rebuild `ActiveSessionViewModel` with comprehensive immutable state: participant list, turn indicator, current exercise, set queue, stepper values initialized from active participant's last set, debounce, elapsed timer calculated from `started_at - paused_total_ms`, and "Done" action (save set + trigger rest timer + advance turn).
+- [x] **TASK-2.3**: Implement / overhaul `DashboardViewModel`, `SummaryViewModel`, `ProgressViewModel`, `ExercisesViewModel`, and `HistoryViewModel` (participant filter, expandable cards, confirmable deletion with undo snackbar).
+- [x] **TASK-2.4**: Persist active member context in `app_settings` Room table (zero extra dependencies).
+- [x] **TASK-2.5**: Replace all `collectAsState` with `collectAsStateWithLifecycle` across all screens.
+- [x] **TASK-2.6**: Write automated unit tests for all ViewModels using `StandardTestDispatcher` and `kotlinx-coroutines-test`.
 
 ---
 
-## Milestone 5: Localization & Arabic RTL Polish
+## Milestone 3: Navigation Flow & State Recovery
 
-- [ ] **TASK-5.1**: Define all string resources in `res/values/strings.xml` (English).
-- [ ] **TASK-5.2**: Define 100% matching Arabic translations in `res/values-ar/strings.xml`.
-- [ ] **TASK-5.3**: Apply explicit LTR layout direction wrappers (`CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr)`) to all weight and repetition text displays.
-- [ ] **TASK-5.4**: Verify touch targets meet or exceed 48x48 dp across all buttons and inputs.
-- [ ] **TASK-5.5**: Write Compose UI tests verifying RTL layout direction and number formatting.
+- [x] **TASK-3.1**: Fix splash routing: `Splash` -> (0 members ? `Onboarding` : `Dashboard`) using `rememberUpdatedState` to avoid capturing stale navigation callbacks.
+- [x] **TASK-3.2**: Enforce validation in `OnboardingScreen` before navigation, showing localized inline errors for blank, too long, or duplicate names.
+- [x] **TASK-3.3**: Update `ParticipantSelectionScreen` to pass all selected participant IDs into `startSession` instead of only the first ID.
+- [x] **TASK-3.4**: Connect finish workout action to navigate to `WorkoutSummaryScreen` with live aggregate data.
+- [x] **TASK-3.5**: Add resumption support: opening the app during an `IN_PROGRESS` session shows the resume banner on Dashboard with elapsed duration and exercise count.
+- [x] **TASK-3.6**: Implement discard/cancel confirmation dialogs for empty or active sessions and back-press protection during active workouts.
 
 ---
 
-## Milestone 6: Verification & End-to-End Build
+## Milestone 4: Elimination of Mock Data & Live Functionality
 
-- [ ] **TASK-6.1**: Run complete automated test suite (`./gradlew test`).
-- [ ] **TASK-6.2**: Execute debug APK build (`./gradlew assembleDebug`).
-- [ ] **TASK-6.3**: Verify airplane mode offline operation.
-- [ ] **TASK-6.4**: Verify process termination and reboot session recovery.
-- [ ] **TASK-6.5**: Review file diffs and produce Final Delivery Report.
+- [ ] **TASK-4.1**: Remove all hardcoded dummy data (`RecentSessionCardMock`, fixed names "أحمد/محمد/سلمان", fixed volume `8,640`, fixed set values `72.5×8`) across Dashboard, ActiveSession, Summary, History, Progress, Exercises, and ParticipantSelection.
+- [ ] **TASK-4.2**: Overhaul `ExercisePickerSheet` to use Azm design theme and Arabic categories; hide "فيديو" badge in MVP and keep only "مخصص" (Custom).
+- [ ] **TASK-4.3**: Implement participant profile editing and permanent deletion with strong warning dialog explaining history cascade.
+- [ ] **TASK-4.4**: Verify that no hardcoded strings or numeric literals remain outside test fixtures and preview providers.
+
+---
+
+## Milestone 5: Figma Pixel-Perfect Polish & Arabic RTL
+
+- [ ] **TASK-5.1**: Apply Figma layout specifications screen-by-screen: 16dp corner radiuses, emerald/neon green gradients, 48dp touch targets, visually distinct disabled button states (opacity 0.4).
+- [ ] **TASK-5.2**: Refactor all Compose layouts to use logical alignment (`Alignment.Start`, `Alignment.End`, `Arrangement.Start`, `Arrangement.End`) and `Icons.AutoMirrored` icons, removing artificial manual inversion.
+- [ ] **TASK-5.3**: Extract all user-facing strings into `values/strings.xml` and `values-ar/strings.xml` with 100% parity.
+- [ ] **TASK-5.4**: Implement all UI state variations across screens: Loading (shimmer/spinner), Empty (localized graphics and text), Error (inline / snackbar), and Success.
+
+---
+
+## Milestone 6: Quality, Security & Production Verification
+
+- [ ] **TASK-6.1**: Set `android:allowBackup="false"` in `AndroidManifest.xml` and update backup rules for offline privacy.
+- [ ] **TASK-6.2**: Reconcile lifecycle dependencies (`2.8.7` vs `2.11.0`) and document `compileSdk` alignment.
+- [ ] **TASK-6.3**: Write Compose UI tests for RTL mirroring, isolated LTR numeric formatting (`72.5 كغ`), and 48dp touch targets.
+- [ ] **TASK-6.4**: Run `./gradlew test` and `./gradlew assembleDebug` and verify 100% pass rate.
+- [ ] **TASK-6.5**: Perform physical/emulator verification (Airplane mode, process death during session, reboot, Arabic RTL, Light/Dark mode) and submit Final Delivery Report.

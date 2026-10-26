@@ -114,14 +114,14 @@ fun DashboardScreen(
                         // Header text block
                         Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                text = stringResource(R.string.hero_subtitle),
+                                text = if (activeSession != null) "تمرين قيد التقدم" else stringResource(R.string.hero_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AzmEmeraldGreen,
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = stringResource(R.string.hero_title),
+                                text = if (activeSession != null) stringResource(R.string.dashboard_resume_workout) else stringResource(R.string.hero_title),
                                 style = MaterialTheme.typography.headlineLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = AzmDarkOnSurface,
@@ -129,7 +129,17 @@ fun DashboardScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = stringResource(R.string.hero_description),
+                                text = if (activeSession != null) {
+                                    val elapsedMinutes = ((System.currentTimeMillis() - activeSession.startedAt - activeSession.pausedTotalMs) / (1000 * 60)).coerceAtLeast(0)
+                                    val exCount = activeSession.exercises.size
+                                    if (exCount > 0) {
+                                        "مضى $elapsedMinutes دقيقة • $exCount تمارين مسجلة"
+                                    } else {
+                                        "مضى $elapsedMinutes دقيقة • جاهز لتسجيل الجولات"
+                                    }
+                                } else {
+                                    stringResource(R.string.hero_description)
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = AzmDarkOnSurfaceMuted,
                             )

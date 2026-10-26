@@ -75,6 +75,8 @@
     <string name="session_pause_action">Pause</string>
     <string name="session_discard_dialog_title">Discard Workout?</string>
     <string name="session_discard_dialog_msg">Are you sure you want to discard this session? All logged sets will be discarded.</string>
+    <string name="session_exit_keep_running">Keep Running &amp; Exit</string>
+    <string name="session_exit_discard">Discard Workout</string>
     <string name="delete_round_dialog_title">Delete Round?</string>
     <string name="delete_round_dialog_msg">You can undo after deleting.</string>
 

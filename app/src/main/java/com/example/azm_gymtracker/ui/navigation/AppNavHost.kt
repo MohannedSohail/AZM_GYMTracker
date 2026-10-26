@@ -9,10 +9,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -21,9 +22,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.azm_gymtracker.AppContainer
+import com.example.azm_gymtracker.presentation.dashboard.DashboardViewModel
 import com.example.azm_gymtracker.presentation.history.HistoryViewModel
 import com.example.azm_gymtracker.presentation.member.MemberViewModel
 import com.example.azm_gymtracker.presentation.session.ActiveSessionViewModel
+import com.example.azm_gymtracker.presentation.summary.SummaryViewModel
 import com.example.azm_gymtracker.ui.component.AzmNavTab
 import com.example.azm_gymtracker.ui.screen.ActiveSessionScreen
 import com.example.azm_gymtracker.ui.screen.DashboardScreen
@@ -35,6 +38,7 @@ import com.example.azm_gymtracker.ui.screen.ParticipantSummaryItem
 import com.example.azm_gymtracker.ui.screen.ProgressScreen
 import com.example.azm_gymtracker.ui.screen.SplashScreen
 import com.example.azm_gymtracker.ui.screen.WorkoutSummaryScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavHost(
@@ -45,12 +49,12 @@ fun AppNavHost(
     val memberViewModel: MemberViewModel = viewModel(
         factory = MemberViewModel.Factory(container.memberRepository)
     )
-    val memberState by memberViewModel.uiState.collectAsState()
+    val memberState by memberViewModel.uiState.collectAsStateWithLifecycle()
 
     val historyViewModel: HistoryViewModel = viewModel(
-        factory = HistoryViewModel.Factory(container.workoutRepository)
+        factory = HistoryViewModel.Factory(container.workoutRepository, container.memberRepository)
     )
-    val historyState by historyViewModel.uiState.collectAsState()
+    val historyState by historyViewModel.uiState.collectAsStateWithLifecycle()
 
     // Smooth navigation specs based on Figma motion guidelines (280ms)
     val animationDuration = 280
@@ -115,9 +119,10 @@ fun AppNavHost(
             OnboardingScreen(
                 nameError = memberState.nameError,
                 onCreateMember = { name, colorHex ->
-                    memberViewModel.createMember(name, colorHex)
-                    navController.navigate(NavRoutes.Dashboard.route) {
-                        popUpTo(NavRoutes.Onboarding.route) { inclusive = true }
+                    memberViewModel.createMember(name, colorHex) {
+                        navController.navigate(NavRoutes.Dashboard.route) {
+                            popUpTo(NavRoutes.Onboarding.route) { inclusive = true }
+                        }
                     }
                 },
                 onClearNameError = { memberViewModel.clearNameError() },
@@ -129,31 +134,43 @@ fun AppNavHost(
             route = NavRoutes.Dashboard.route,
             enterTransition = { fadeIn(animationSpec = tween(250)) },
         ) {
-            val activeMember = memberState.activeMember
-            val activeSessionFlow = remember(activeMember?.id) {
-                activeMember?.let { container.workoutRepository.getActiveSession(it.id) }
-            }
-            val activeSession by (activeSessionFlow?.collectAsState(initial = null)
-                ?: remember { androidx.compose.runtime.mutableStateOf(null) })
-
-            val recentSessionsFlow = remember(activeMember?.id) {
-                activeMember?.let { container.workoutRepository.getCompletedSessions(it.id) }
-            }
-            val recentSessions by (recentSessionsFlow?.collectAsState(initial = emptyList())
-                ?: remember { androidx.compose.runtime.mutableStateOf(emptyList()) })
+            val dashboardViewModel: DashboardViewModel = viewModel(
+                factory = DashboardViewModel.Factory(container.memberRepository, container.workoutRepository)
+            )
+            val dashboardState by dashboardViewModel.uiState.collectAsStateWithLifecycle()
 
             DashboardScreen(
-                activeMember = activeMember,
-                members = memberState.members,
-                activeSession = activeSession,
-                recentSessions = recentSessions.take(5),
+                activeMember = dashboardState.activeMember,
+                members = dashboardState.allMembers,
+                activeSession = dashboardState.activeSession?.session?.let { s ->
+                    com.example.azm_gymtracker.domain.model.WorkoutSession(
+                        id = s.id,
+                        startedAt = s.startedAt,
+                        endedAt = s.endedAt,
+                        pausedTotalMs = s.pausedTotalMs,
+                        status = when (s.status) {
+                            "COMPLETED" -> com.example.azm_gymtracker.domain.model.SessionStatus.COMPLETED
+                            "CANCELLED", "DISCARDED" -> com.example.azm_gymtracker.domain.model.SessionStatus.CANCELLED
+                            else -> com.example.azm_gymtracker.domain.model.SessionStatus.IN_PROGRESS
+                        },
+                        notes = s.notes,
+                        exercises = dashboardState.activeSession?.exercises?.map { ex ->
+                            com.example.azm_gymtracker.domain.model.WorkoutExercise(
+                                id = ex.workoutExercise.id,
+                                sessionId = ex.workoutExercise.sessionId,
+                                exerciseId = ex.workoutExercise.exerciseId,
+                                exerciseName = ex.workoutExercise.exerciseNameSnapshot,
+                                orderIndex = ex.workoutExercise.orderIndex,
+                            )
+                        } ?: emptyList(),
+                    )
+                },
+                recentSessions = dashboardState.recentSessions,
                 onStartWorkout = {
                     navController.navigate(NavRoutes.ParticipantSelection.route)
                 },
                 onResumeWorkout = {
-                    activeMember?.let { member ->
-                        navController.navigate(NavRoutes.ActiveSession.createRoute(member.id))
-                    }
+                    navController.navigate(NavRoutes.ActiveSession.route)
                 },
                 onTabSelected = { tab ->
                     when (tab) {
@@ -170,12 +187,25 @@ fun AppNavHost(
         composable(
             route = NavRoutes.ParticipantSelection.route,
         ) {
+            val coroutineScope = rememberCoroutineScope()
+
             ParticipantSelectionScreen(
                 members = memberState.members,
                 initialSelectedMemberIds = memberState.activeMember?.let { setOf(it.id) } ?: emptySet(),
                 onStartWorkout = { selectedMemberIds ->
-                    val primaryId = selectedMemberIds.firstOrNull() ?: memberState.activeMember?.id ?: 1L
-                    navController.navigate(NavRoutes.ActiveSession.createRoute(primaryId))
+                    coroutineScope.launch {
+                        val ids = if (selectedMemberIds.isNotEmpty()) {
+                            selectedMemberIds
+                        } else {
+                            listOfNotNull(memberState.activeMember?.id)
+                        }
+                        if (ids.isNotEmpty()) {
+                            container.workoutRepository.startSession(ids)
+                            navController.navigate(NavRoutes.ActiveSession.route) {
+                                popUpTo(NavRoutes.Dashboard.route)
+                            }
+                        }
+                    }
                 },
                 onCreateMember = { name, colorHex ->
                     memberViewModel.createMember(name, colorHex)
@@ -192,22 +222,19 @@ fun AppNavHost(
         // Active Session Screen ("التمرين النشط")
         composable(
             route = NavRoutes.ActiveSession.route,
-            arguments = listOf(navArgument("memberId") { type = NavType.LongType }),
-        ) { backStackEntry ->
-            val memberId = backStackEntry.arguments?.getLong("memberId") ?: return@composable
-
+        ) {
             val sessionViewModel: ActiveSessionViewModel = viewModel(
                 factory = ActiveSessionViewModel.Factory(
                     workoutRepository = container.workoutRepository,
                     exerciseRepository = container.exerciseRepository,
-                    memberId = memberId,
                 ),
             )
-            val sessionState by sessionViewModel.uiState.collectAsState()
+            val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
 
             LaunchedEffect(sessionState.isSessionFinished) {
                 if (sessionState.isSessionFinished) {
-                    navController.navigate(NavRoutes.WorkoutSummary.route) {
+                    val sessionId = sessionState.finishedSessionId ?: 0L
+                    navController.navigate(NavRoutes.WorkoutSummary.createRoute(sessionId)) {
                         popUpTo(NavRoutes.Dashboard.route)
                     }
                 }
@@ -228,6 +255,14 @@ fun AppNavHost(
                 onDeleteSet = { setId, workoutExerciseId ->
                     sessionViewModel.deleteSet(setId, workoutExerciseId)
                 },
+                onDoneSet = { sessionViewModel.onDoneSet() },
+                onAdjustWeight = { sessionViewModel.adjustWeight(it) },
+                onAdjustReps = { sessionViewModel.adjustReps(it) },
+                onSelectTurn = { sessionViewModel.selectTurn(it) },
+                onSkipRestTimer = { sessionViewModel.skipRestTimer() },
+                onAdjustRestTimer = { sessionViewModel.adjustRestTimer(it) },
+                onPauseSession = { sessionViewModel.pauseSession() },
+                onResumeSession = { sessionViewModel.resumeSession() },
                 onFinishSession = { sessionViewModel.finishSession() },
                 onDiscardSession = {
                     sessionViewModel.discardSession()
@@ -240,20 +275,31 @@ fun AppNavHost(
         // Workout Summary Screen ("ملخص التمرين")
         composable(
             route = NavRoutes.WorkoutSummary.route,
-        ) {
-            val sampleSummaries = listOf(
-                ParticipantSummaryItem(1L, "أحمد", "#3FE779", 3240.0, 6),
-                ParticipantSummaryItem(2L, "محمد", "#FFD177", 2880.0, 6),
-                ParticipantSummaryItem(3L, "سلمان", "#8E9CFF", 2520.0, 6),
+            arguments = listOf(navArgument("sessionId") { type = NavType.LongType }),
+        ) { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: 0L
+            val summaryViewModel: SummaryViewModel = viewModel(
+                factory = SummaryViewModel.Factory(container.workoutRepository, sessionId)
             )
+            val summaryState by summaryViewModel.uiState.collectAsStateWithLifecycle()
+
+            val participantSummaries = summaryState.sessionWithDetails?.participants?.map { member ->
+                val breakdown = summaryState.participantBreakdowns.find { it.memberId == member.id }
+                ParticipantSummaryItem(
+                    memberId = member.id,
+                    name = member.name,
+                    colorHex = member.colorHex,
+                    volumeKg = breakdown?.totalVolume ?: 0.0,
+                    totalSets = breakdown?.setsCount ?: 0,
+                )
+            } ?: emptyList()
 
             WorkoutSummaryScreen(
-                totalVolumeKg = 8640.0,
-                totalSets = 18,
-                totalExercises = 3,
-                durationSeconds = 2538, // 42:18
-                participantSummaries = sampleSummaries,
-                newPersonalRecordText = "رقم قياسي جديد • أحمد • بنش 72.5 كجم",
+                totalVolumeKg = summaryState.totalVolumeKg,
+                totalSets = summaryState.totalSetsCount,
+                totalExercises = summaryState.totalExercisesCount,
+                durationSeconds = summaryState.durationMinutes * 60,
+                participantSummaries = participantSummaries,
                 onReturnHome = {
                     navController.navigate(NavRoutes.Dashboard.route) {
                         popUpTo(NavRoutes.Dashboard.route) { inclusive = true }
@@ -270,7 +316,7 @@ fun AppNavHost(
             route = NavRoutes.Exercises.route,
         ) {
             val exercisesFlow = remember { container.exerciseRepository.getAllExercises() }
-            val exercises by exercisesFlow.collectAsState(initial = emptyList())
+            val exercises by exercisesFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
             ExercisesScreen(
                 exercises = exercises,

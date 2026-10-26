@@ -40,50 +40,68 @@ class MemberViewModel(private val repository: MemberRepository) : ViewModel() {
 
     private fun observeMembers() {
         viewModelScope.launch {
-            repository.getAllMembers()
-                .catch { e -> _uiState.update { it.copy(error = e.message, isLoading = false) } }
-                .collect { members ->
-                    _uiState.update { current ->
-                        current.copy(
-                            members = members,
-                            isLoading = false,
-                            // Auto-select first member if none is selected
-                            activeMember = current.activeMember ?: members.firstOrNull(),
-                        )
-                    }
+            kotlinx.coroutines.flow.combine(
+                repository.getAllMembers(),
+                repository.getActiveMemberId(),
+            ) { members, activeId ->
+                val active = members.find { it.id == activeId } ?: members.firstOrNull()
+                Pair(members, active)
+            }.catch { e ->
+                _uiState.update { it.copy(error = e.message, isLoading = false) }
+            }.collect { (members, active) ->
+                _uiState.update { current ->
+                    current.copy(
+                        members = members,
+                        isLoading = false,
+                        activeMember = active,
+                    )
                 }
+            }
         }
     }
 
     /** Sets the currently active member (switching between profiles). */
     fun selectMember(member: Member) {
         _uiState.update { it.copy(activeMember = member, error = null) }
+        viewModelScope.launch {
+            repository.setActiveMemberId(member.id)
+        }
     }
 
     /**
      * Validates and creates a new member.
      * Updates [MemberUiState.nameError] inline if validation fails.
+     * Only invokes [onSuccess] after successful database creation.
      */
-    fun createMember(name: String, colorHex: String) {
+    fun createMember(name: String, colorHex: String, onSuccess: () -> Unit = {}) {
         val validationResult = MemberNameValidator.validate(name)
         if (validationResult != MemberNameValidator.Result.Valid) {
             val errorMsg = when (validationResult) {
-                MemberNameValidator.Result.Blank -> "Name cannot be blank"
+                MemberNameValidator.Result.Blank -> "الاسم لا يمكن أن يكون فارغاً"
                 is MemberNameValidator.Result.TooLong ->
-                    "Name must be ${validationResult.max} characters or fewer"
+                    "يجب ألا يتجاوز الاسم ${validationResult.max} حرفاً"
                 MemberNameValidator.Result.Valid -> null
             }
             _uiState.update { it.copy(nameError = errorMsg) }
             return
         }
 
+        val trimmed = name.trim()
+        if (_uiState.value.members.any { it.name.equals(trimmed, ignoreCase = true) }) {
+            _uiState.update { it.copy(nameError = "هذا الاسم مستخدم بالفعل") }
+            return
+        }
+
         _uiState.update { it.copy(nameError = null) }
         viewModelScope.launch {
             runCatching {
-                repository.createMember(Member(name = name, colorHex = colorHex))
+                val newId = repository.createMember(Member(name = trimmed, colorHex = colorHex))
+                repository.setActiveMemberId(newId)
+            }.onSuccess {
+                onSuccess()
             }.onFailure { e ->
                 _uiState.update {
-                    it.copy(error = e.message ?: "Failed to create member")
+                    it.copy(nameError = e.message ?: "فشل إنشاء العضو")
                 }
             }
         }
