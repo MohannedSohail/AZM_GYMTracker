@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,9 +71,9 @@ fun DashboardScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AzmDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            AzmTopBar(isOffline = true)
+            AzmTopBar()
         },
         bottomBar = {
             AzmBottomNavigation(
@@ -81,6 +82,7 @@ fun DashboardScreen(
             )
         },
     ) { innerPadding ->
+        val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -88,50 +90,71 @@ fun DashboardScreen(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            // Hero Card "جاهز للجولة التالية؟" (Figma Node #87:278)
+            // Hero Card "جاهز للجولة التالية؟" (Figma Node #87:278 & #87:1039)
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(278.dp)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(AzmHeroCardGradient)
-                        .border(1.dp, AzmBorderSubtle, RoundedCornerShape(24.dp))
+                        .background(if (isDark) AzmHeroCardGradient else com.example.azm_gymtracker.ui.theme.AzmLightHeroCardGradient)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
                         .padding(20.dp),
                 ) {
-                    // Geometric plate background watermark (End / Left in RTL, leaving Start / Right for text)
-                    AzmEmblem(
-                        size = 170.dp,
-                        strokeColor = AzmEmeraldGreen.copy(alpha = 0.12f),
+                    // Subtle vector emblem watermark (End / Left in RTL, leaving Start / Right for text)
+                    Box(
                         modifier = Modifier
+                            .size(130.dp)
                             .align(Alignment.TopEnd)
                             .padding(top = 10.dp),
-                    )
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background((if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary).copy(alpha = 0.08f)),
+                        )
+                        Icon(
+                            painter = painterResource(R.drawable.ic_azm_logo),
+                            contentDescription = null,
+                            tint = (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary).copy(alpha = 0.25f),
+                            modifier = Modifier.size(80.dp),
+                        )
+                    }
 
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         // Header text block
-                        Column(horizontalAlignment = Alignment.Start, modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            modifier = Modifier.fillMaxWidth(0.65f),
+                        ) {
                             Text(
                                 text = if (activeSession != null) "تمرين قيد التقدم" else stringResource(R.string.hero_subtitle),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AzmEmeraldGreen,
+                                color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = if (activeSession != null) stringResource(R.string.dashboard_resume_workout) else stringResource(R.string.hero_title),
+                                text = if (activeSession != null) stringResource(R.string.dashboard_resume_workout) else stringResource(
+                                    R.string.hero_title
+                                ),
                                 style = MaterialTheme.typography.headlineLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = AzmDarkOnSurface,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 lineHeight = 34.sp,
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = if (activeSession != null) {
-                                    val elapsedMinutes = ((System.currentTimeMillis() - activeSession.startedAt - activeSession.pausedTotalMs) / (1000 * 60)).coerceAtLeast(0)
+                                    val elapsedMinutes =
+                                        ((System.currentTimeMillis() - activeSession.startedAt - activeSession.pausedTotalMs) / (1000 * 60)).coerceAtLeast(
+                                            0
+                                        )
                                     val exCount = activeSession.exercises.size
                                     if (exCount > 0) {
                                         "مضى $elapsedMinutes دقيقة • $exCount تمارين مسجلة"
@@ -142,7 +165,9 @@ fun DashboardScreen(
                                     stringResource(R.string.hero_description)
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = AzmDarkOnSurfaceMuted,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 22.sp,
+                                fontWeight = FontWeight.Medium,
                             )
                         }
 
@@ -162,7 +187,7 @@ fun DashboardScreen(
                 }
             }
 
-            // Recent Sessions Section (Figma Node #87:295)
+            // Recent Sessions Section (Figma Node #87:295 & #87:1056)
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -173,12 +198,12 @@ fun DashboardScreen(
                         text = stringResource(R.string.recent_sessions_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = AzmDarkOnSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = stringResource(R.string.recent_sessions_count, recentSessions.size),
                         style = MaterialTheme.typography.bodySmall,
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -190,8 +215,8 @@ fun DashboardScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
-                            .background(AzmDarkSurface)
-                            .border(1.dp, AzmBorderSubtle, RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
@@ -199,13 +224,13 @@ fun DashboardScreen(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(AzmDarkSurfaceVariant),
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.DateRange,
                                 contentDescription = null,
-                                tint = AzmEmeraldGreen,
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp),
                             )
                         }
@@ -214,13 +239,13 @@ fun DashboardScreen(
                             text = stringResource(R.string.history_empty),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = AzmDarkOnSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = stringResource(R.string.history_empty_subtitle),
                             style = MaterialTheme.typography.bodySmall,
-                            color = AzmDarkOnSurfaceMuted,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -232,7 +257,8 @@ fun DashboardScreen(
                     val minutes = durationSec / 60
                     val seconds = durationSec % 60
                     val durationStr = String.format(Locale.US, "%02d:%02d", minutes, seconds)
-                    val totalVol = session.exercises.sumOf { ex -> ex.sets.sumOf { (it.weightKg ?: 0f).toDouble() * it.reps } }
+                    val totalVol =
+                        session.exercises.sumOf { ex -> ex.sets.sumOf { (it.weightKg ?: 0f).toDouble() * it.reps } }
                     val volumeStr = String.format(Locale.US, "%,.0f", totalVol)
 
                     RecentSessionCard(
@@ -260,8 +286,8 @@ private fun RecentSessionCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(AzmDarkSurface)
-            .border(1.dp, AzmBorderSubtle, RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -276,13 +302,13 @@ private fun RecentSessionCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(AzmDarkBackground),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = null,
-                    tint = AzmEmeraldGreen,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -292,13 +318,13 @@ private fun RecentSessionCard(
                     text = dateTitle,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = metadata,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AzmDarkOnSurfaceMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -307,7 +333,7 @@ private fun RecentSessionCard(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
             contentDescription = null,
-            tint = AzmDarkOnSurfaceMuted,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp),
         )
     }

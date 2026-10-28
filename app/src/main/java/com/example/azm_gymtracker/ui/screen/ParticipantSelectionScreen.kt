@@ -11,22 +11,31 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.azm_gymtracker.ui.animation.azmPhysicsItemEntrance
+import com.example.azm_gymtracker.ui.animation.azmPhysicsPress
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.example.azm_gymtracker.ui.theme.LocalThemeIsDark
+import com.example.azm_gymtracker.ui.theme.LocalThemeToggle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -41,7 +50,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -94,18 +106,22 @@ fun ParticipantSelectionScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingMember by remember { mutableStateOf<Member?>(null) }
     var memberToDelete by remember { mutableStateOf<Member?>(null) }
+    val isDark = LocalThemeIsDark.current
+    val toggleTheme = LocalThemeToggle.current
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AzmDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .statusBarsPadding()
+                .navigationBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
-            // Header Row: Title + Back Button
+            // Header Row: Title + Theme Toggle + Back Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -116,24 +132,57 @@ fun ParticipantSelectionScreen(
                     text = stringResource(R.string.participants_title),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
-                // Back button (End side / Left in RTL, 48x48dp in #10271C)
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(AzmDarkSurfaceVariant)
-                        .clickable(onClick = onNavigateBack),
-                    contentAlignment = Alignment.Center,
+                // Actions: Theme Toggle + Back button (End side / Left in RTL)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = stringResource(R.string.action_back),
-                        tint = AzmDarkOnSurface,
-                        modifier = Modifier.size(24.dp),
-                    )
+                    // Theme toggle button
+                    var buttonCenter by remember { mutableStateOf<Offset?>(null) }
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                            .onGloballyPositioned { coordinates ->
+                                val pos = coordinates.positionInRoot()
+                                buttonCenter = Offset(
+                                    pos.x + coordinates.size.width / 2f,
+                                    pos.y + coordinates.size.height / 2f,
+                                )
+                            }
+                            .azmPhysicsPress(pressedScale = 0.88f) { toggleTheme(buttonCenter) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (isDark) "الوضع الفاتح" else "الوضع الداكن",
+                            tint = if (isDark) Color(0xFFFFD54F) else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+
+                    // Back button
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                            .clickable(onClick = onNavigateBack),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = stringResource(R.string.action_back),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
                 }
             }
 
@@ -141,7 +190,7 @@ fun ParticipantSelectionScreen(
             Text(
                 text = stringResource(R.string.participants_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
-                color = AzmDarkOnSurfaceMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.Start),
             )
 
@@ -157,19 +206,19 @@ fun ParticipantSelectionScreen(
                     text = stringResource(R.string.participants_heading),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
 
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(AzmDarkSurfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.participants_count_badge, selectedIds.size),
                         style = MaterialTheme.typography.bodySmall,
-                        color = AzmEmeraldGreen,
+                        color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
                     )
                 }
@@ -182,7 +231,7 @@ fun ParticipantSelectionScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(members, key = { it.id }) { member ->
+                itemsIndexed(members, key = { _, it -> it.id }) { index, member ->
                     val isSelected = selectedIds.contains(member.id)
                     val memberColor = parseMemberColor(member.colorHex)
 
@@ -196,6 +245,7 @@ fun ParticipantSelectionScreen(
                         },
                         onEdit = { editingMember = member },
                         onDelete = { memberToDelete = member },
+                        modifier = Modifier.azmPhysicsItemEntrance(index = index),
                     )
                 }
 
@@ -222,13 +272,13 @@ fun ParticipantSelectionScreen(
                 Text(
                     text = stringResource(R.string.participants_reassurance),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AzmDarkOnSurfaceMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     imageVector = Icons.Default.PhoneAndroid,
                     contentDescription = null,
-                    tint = AzmDarkOnSurfaceMuted,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -277,13 +327,13 @@ fun ParticipantSelectionScreen(
     memberToDelete?.let { member ->
         AlertDialog(
             onDismissRequest = { memberToDelete = null },
-            containerColor = AzmDarkSurface,
+            containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(32.dp),
             title = {
                 Text(
                     text = "حذف المتدرب نهائياً؟",
                     style = MaterialTheme.typography.titleLarge,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                 )
             },
@@ -291,7 +341,7 @@ fun ParticipantSelectionScreen(
                 Text(
                     text = "هل أنت متأكد من حذف \"${member.name}\"؟\n\nتنبيه: سيؤدي حذف هذا المتدرب إلى إزالة جميع سجلات تمارينه وجولاته السابقة نهائياً من هذا الجهاز. هذه الخطوة لا يمكن التراجع عنها.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AzmDarkOnSurfaceMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
             confirmButton = {
@@ -307,7 +357,7 @@ fun ParticipantSelectionScreen(
             },
             dismissButton = {
                 TextButton(onClick = { memberToDelete = null }) {
-                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                    Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
         )
@@ -324,8 +374,9 @@ private fun ParticipantCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val cardBackground = if (isSelected) AzmDarkSurfaceSelected else AzmDarkSurface
-    val cardBorder = if (isSelected) AzmEmeraldGreen else AzmBorderSubtle
+    val isDark = LocalThemeIsDark.current
+    val cardBackground = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    val cardBorder = if (isSelected) (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.outline
 
     Row(
         modifier = modifier
@@ -333,7 +384,7 @@ private fun ParticipantCard(
             .clip(RoundedCornerShape(24.dp))
             .background(cardBackground)
             .border(width = 1.dp, color = cardBorder, shape = RoundedCornerShape(24.dp))
-            .clickable(onClick = onToggle)
+            .azmPhysicsPress(pressedScale = 0.96f, onClick = onToggle)
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -353,13 +404,13 @@ private fun ParticipantCard(
                     text = member.name,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 if (isSelected) {
                     Text(
                         text = stringResource(R.string.participants_selected_badge),
                         style = MaterialTheme.typography.bodySmall,
-                        color = AzmEmeraldGreen,
+                        color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -375,12 +426,12 @@ private fun ParticipantCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(AzmDarkSurfaceVariant),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = stringResource(R.string.action_edit),
-                    tint = AzmDarkOnSurfaceMuted,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -390,12 +441,12 @@ private fun ParticipantCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(AzmDarkSurfaceVariant),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(R.string.action_delete),
-                    tint = AzmDarkOnSurfaceMuted,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -422,14 +473,14 @@ fun AddParticipantDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AzmDarkSurface,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(32.dp),
         title = {
             Text(
                 text = "إضافة مشارك",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         text = {
@@ -442,10 +493,12 @@ fun AddParticipantDialog(
                     onValueChange = { name = it },
                     label = { Text("الاسم") },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AzmEmeraldGreen,
-                        unfocusedBorderColor = AzmBorderSubtle,
-                        focusedTextColor = AzmDarkOnSurface,
-                        unfocusedTextColor = AzmDarkOnSurface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
@@ -455,7 +508,7 @@ fun AddParticipantDialog(
                 Text(
                     text = "اللون والحرف الأول",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AzmDarkOnSurfaceMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 // Color picker row
@@ -473,7 +526,7 @@ fun AddParticipantDialog(
                                 .then(
                                     if (isChosen) Modifier.border(
                                         2.dp,
-                                        Color.White,
+                                        MaterialTheme.colorScheme.onSurface,
                                         RoundedCornerShape(16.dp),
                                     ) else Modifier
                                 )
@@ -484,7 +537,7 @@ fun AddParticipantDialog(
                                 text = name.take(1).ifEmpty { "أ" },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = AzmDarkBackground,
+                                color = Color(0xFF041C0E),
                             )
                         }
                     }
@@ -501,7 +554,7 @@ fun AddParticipantDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
     )
@@ -527,14 +580,14 @@ fun EditParticipantDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AzmDarkSurface,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(32.dp),
         title = {
             Text(
                 text = "تعديل المتدرب",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         text = {
@@ -547,10 +600,12 @@ fun EditParticipantDialog(
                     onValueChange = { name = it },
                     label = { Text("الاسم") },
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = AzmEmeraldGreen,
-                        unfocusedBorderColor = AzmBorderSubtle,
-                        focusedTextColor = AzmDarkOnSurface,
-                        unfocusedTextColor = AzmDarkOnSurface,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
@@ -560,7 +615,7 @@ fun EditParticipantDialog(
                 Text(
                     text = "اللون والحرف الأول",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AzmDarkOnSurfaceMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 // Color picker row
@@ -578,7 +633,7 @@ fun EditParticipantDialog(
                                 .then(
                                     if (isChosen) Modifier.border(
                                         2.dp,
-                                        Color.White,
+                                        MaterialTheme.colorScheme.onSurface,
                                         RoundedCornerShape(16.dp),
                                     ) else Modifier
                                 )
@@ -589,7 +644,7 @@ fun EditParticipantDialog(
                                 text = name.take(1).ifEmpty { "أ" },
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = AzmDarkBackground,
+                                color = Color(0xFF041C0E),
                             )
                         }
                     }
@@ -608,7 +663,7 @@ fun EditParticipantDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
     )

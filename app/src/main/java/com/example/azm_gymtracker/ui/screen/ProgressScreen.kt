@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -71,7 +72,7 @@ fun ProgressScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AzmDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             AzmBottomNavigation(
                 currentTab = AzmNavTab.PROGRESS,
@@ -79,10 +80,14 @@ fun ProgressScreen(
             )
         },
     ) { innerPadding ->
+        val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+        val accent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .statusBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -92,7 +97,7 @@ fun ProgressScreen(
                     text = stringResource(R.string.progress_title),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(vertical = 4.dp),
                 )
             }
@@ -110,10 +115,10 @@ fun ProgressScreen(
                         Row(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(if (isSelected) AzmDarkSurfaceSelected else AzmDarkSurface)
+                                .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
                                 .border(
                                     1.dp,
-                                    if (isSelected) AzmEmeraldGreen else AzmBorderSubtle,
+                                    if (isSelected) accent else MaterialTheme.colorScheme.outline,
                                     CircleShape
                                 )
                                 .clickable { onSelectMember(member) }
@@ -125,7 +130,7 @@ fun ProgressScreen(
                                 text = if (isSelected) "${member.name} ✓" else member.name,
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) AzmDarkOnSurface else AzmDarkOnSurfaceMuted,
+                                color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface,
                             )
                             ParticipantAvatarBox(
                                 character = member.name,
@@ -145,7 +150,7 @@ fun ProgressScreen(
                         .fillMaxWidth()
                         .height(48.dp)
                         .clip(CircleShape)
-                        .background(AzmDarkSurfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -225,8 +230,8 @@ fun ProgressScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(AzmDarkSurface)
-                        .border(1.dp, AzmBorderSubtle, RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
                         .padding(16.dp),
                 ) {
                     Row(
@@ -238,7 +243,7 @@ fun ProgressScreen(
                             text = stringResource(R.string.progress_bench_history),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = AzmDarkOnSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
 
                         val deltaSign = if (uiState.weightDeltaKg >= 0) "+" else ""
@@ -252,13 +257,13 @@ fun ProgressScreen(
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(AzmDarkSurfaceVariant)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
                         ) {
                             Text(
                                 text = deltaText,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (uiState.weightDeltaKg >= 0) AzmEmeraldGreen else AzmDarkOnSurfaceMuted,
+                                color = if (uiState.weightDeltaKg >= 0) accent else MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Bold,
                             )
                         }
@@ -270,6 +275,7 @@ fun ProgressScreen(
                     val minWeight = if (points.isNotEmpty()) points.minOf { it.weightKg } else 0f
                     val maxWeight = if (points.isNotEmpty()) points.maxOf { it.weightKg } else 0f
                     val weightSpan = if (maxWeight > minWeight) maxWeight - minWeight else 1f
+                    val gridColor = MaterialTheme.colorScheme.outline
 
                     // Line Graph Canvas
                     Row(
@@ -286,17 +292,17 @@ fun ProgressScreen(
                             Text(
                                 text = if (maxWeight > 0) "${maxWeight.toInt()}" else "-",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AzmDarkOnSurfaceMuted,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
                                 text = if (maxWeight > minWeight) "${((maxWeight + minWeight) / 2).toInt()}" else "-",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AzmDarkOnSurfaceMuted,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
                                 text = if (minWeight > 0) "${minWeight.toInt()}" else "-",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AzmDarkOnSurfaceMuted,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
 
@@ -305,9 +311,9 @@ fun ProgressScreen(
                             val h = size.height
 
                             // Draw subtle horizontal grid lines
-                            drawLine(AzmBorderSubtle, Offset(0f, 0f), Offset(w, 0f), strokeWidth = 1f)
-                            drawLine(AzmBorderSubtle, Offset(0f, h / 2f), Offset(w, h / 2f), strokeWidth = 1f)
-                            drawLine(AzmBorderSubtle, Offset(0f, h), Offset(w, h), strokeWidth = 1f)
+                            drawLine(gridColor, Offset(0f, 0f), Offset(w, 0f), strokeWidth = 1f)
+                            drawLine(gridColor, Offset(0f, h / 2f), Offset(w, h / 2f), strokeWidth = 1f)
+                            drawLine(gridColor, Offset(0f, h), Offset(w, h), strokeWidth = 1f)
 
                             if (points.size >= 2) {
                                 val path = Path()
@@ -323,17 +329,17 @@ fun ProgressScreen(
                                 }
                                 drawPath(
                                     path = path,
-                                    color = AzmEmeraldGreen,
+                                    color = accent,
                                     style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
                                 )
 
                                 val lastPt = points.last()
                                 val lastNormalizedY = (lastPt.weightKg - minWeight) / weightSpan
                                 val lastY = h - (lastNormalizedY * (h * 0.8f) + h * 0.1f)
-                                drawCircle(AzmNeonGreen, radius = 5.dp.toPx(), center = Offset(w, lastY))
+                                drawCircle(if (isDark) AzmNeonGreen else accent, radius = 5.dp.toPx(), center = Offset(w, lastY))
                             } else if (points.size == 1) {
                                 val y = h / 2f
-                                drawCircle(AzmNeonGreen, radius = 5.dp.toPx(), center = Offset(w / 2f, y))
+                                drawCircle(if (isDark) AzmNeonGreen else accent, radius = 5.dp.toPx(), center = Offset(w / 2f, y))
                             }
                         }
                     }
@@ -346,15 +352,15 @@ fun ProgressScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(AzmDarkSurface)
-                        .border(1.dp, AzmBorderSubtle, RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
                         .padding(16.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.progress_weekly_sessions),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AzmDarkOnSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -392,8 +398,8 @@ fun ProgressScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(AzmDarkSurface)
-                            .border(1.dp, AzmBorderSubtle, RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
                             .padding(14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
@@ -401,14 +407,14 @@ fun ProgressScreen(
                         Text(
                             text = "${uiState.activeMember?.name ?: ""} • أعلى وزن مسجل",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = AzmDarkOnSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Medium,
                         )
 
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(AzmDarkSurfaceVariant)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(horizontal = 10.dp, vertical = 4.dp),
                         ) {
                             Text(
@@ -436,11 +442,14 @@ private fun PeriodOption(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+    val accent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .clip(CircleShape)
-            .background(if (isSelected) AzmDarkSurfaceSelected else Color.Transparent)
+            .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -448,7 +457,7 @@ private fun PeriodOption(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) AzmEmeraldGreen else AzmDarkOnSurfaceMuted,
+            color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -462,21 +471,21 @@ private fun ProgressStatCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(AzmDarkSurface)
-            .border(1.dp, AzmBorderSubtle, RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
             .padding(14.dp),
     ) {
         Text(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = AzmDarkOnSurface,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = AzmDarkOnSurfaceMuted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -488,6 +497,9 @@ private fun WeeklyBar(
     label: String,
     isCurrent: Boolean = false,
 ) {
+    val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+    val accent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom,
@@ -495,7 +507,7 @@ private fun WeeklyBar(
         Text(
             text = "$count",
             style = MaterialTheme.typography.bodySmall,
-            color = AzmDarkOnSurface,
+            color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.SemiBold,
         )
         Spacer(modifier = Modifier.height(4.dp))
@@ -504,13 +516,13 @@ private fun WeeklyBar(
                 .width(28.dp)
                 .height(barHeight)
                 .clip(RoundedCornerShape(4.dp))
-                .background(if (isCurrent) AzmEmeraldGreen else AzmEmeraldGreen.copy(alpha = 0.5f)),
+                .background(if (isCurrent) accent else accent.copy(alpha = 0.5f)),
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = AzmDarkOnSurfaceMuted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 10.sp,
         )
     }

@@ -2,7 +2,6 @@ package com.example.azm_gymtracker.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,11 +15,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.azm_gymtracker.ui.animation.azmPhysicsItemEntrance
+import com.example.azm_gymtracker.ui.animation.azmPhysicsPress
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.runtime.mutableStateListOf
+import com.example.azm_gymtracker.ui.component.AzmPrimaryButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,9 +43,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,7 +66,6 @@ import com.example.azm_gymtracker.ui.theme.AzmDarkBackground
 import com.example.azm_gymtracker.ui.theme.AzmDarkOnSurface
 import com.example.azm_gymtracker.ui.theme.AzmDarkOnSurfaceMuted
 import com.example.azm_gymtracker.ui.theme.AzmDarkSurface
-import com.example.azm_gymtracker.ui.theme.AzmDarkSurfaceSelected
 import com.example.azm_gymtracker.ui.theme.AzmDarkSurfaceVariant
 import com.example.azm_gymtracker.ui.theme.AzmEmeraldGreen
 
@@ -78,7 +85,7 @@ private fun categoryDisplayName(category: MuscleCategory): String = when (catego
 @Composable
 fun ExercisePickerSheet(
     exercises: List<Exercise>,
-    onSelectExercise: (Exercise) -> Unit,
+    onSelectExercises: (List<Exercise>) -> Unit,
     onCreateCustomExercise: (name: String, category: MuscleCategory) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -86,11 +93,15 @@ fun ExercisePickerSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<MuscleCategory?>(null) }
-    var showCustomDialog by remember { mutableStateOf(false) }
+    var showCustomDialog by remember { mutableStateOf(value = false) }
+    var page by remember(searchQuery, selectedCategory) { mutableIntStateOf(1) }
+    val pageSize = 15
+
+    val selectedExercises = remember { mutableStateListOf<Exercise>() }
 
     val filteredExercises = remember(exercises, searchQuery, selectedCategory) {
         exercises.filter { ex ->
-            val matchesCategory = selectedCategory == null || ex.category == selectedCategory
+            val matchesCategory = (selectedCategory == null) || (ex.category == selectedCategory)
             val matchesSearch = searchQuery.isBlank() ||
                 ex.nameEn.contains(searchQuery, ignoreCase = true) ||
                 ex.nameAr.contains(searchQuery, ignoreCase = true)
@@ -98,10 +109,17 @@ fun ExercisePickerSheet(
         }
     }
 
+    val pagedExercises = remember(filteredExercises, page) {
+        filteredExercises.take(page * pageSize)
+    }
+    val hasMore = pagedExercises.size < filteredExercises.size
+
+    val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = AzmDarkBackground,
+        containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier.fillMaxHeight(0.9f),
     ) {
         Column(
@@ -119,7 +137,7 @@ fun ExercisePickerSheet(
                     text = stringResource(R.string.picker_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 IconButton(
                     onClick = { showCustomDialog = true },
@@ -128,7 +146,7 @@ fun ExercisePickerSheet(
                     Icon(
                         Icons.Default.Add,
                         contentDescription = stringResource(R.string.picker_create_custom),
-                        tint = AzmEmeraldGreen,
+                        tint = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -142,32 +160,33 @@ fun ExercisePickerSheet(
                 placeholder = {
                     Text(
                         stringResource(R.string.picker_search_hint),
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
                 leadingIcon = {
                     Icon(
                         Icons.Default.Search,
                         contentDescription = null,
-                        tint = AzmDarkOnSurfaceMuted,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = AzmDarkSurface,
-                    unfocusedContainerColor = AzmDarkSurface,
-                    focusedBorderColor = AzmEmeraldGreen,
-                    unfocusedBorderColor = AzmBorderSubtle,
-                    focusedTextColor = AzmDarkOnSurface,
-                    unfocusedTextColor = AzmDarkOnSurface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                 ),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Muscle Category Filter Chips
+            val chipAccent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -177,14 +196,14 @@ fun ExercisePickerSheet(
                         onClick = { selectedCategory = null },
                         label = { Text(stringResource(R.string.picker_category_all)) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AzmEmeraldGreen,
-                            selectedLabelColor = AzmDarkBackground,
-                            containerColor = AzmDarkSurface,
-                            labelColor = AzmDarkOnSurfaceMuted,
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = chipAccent,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (selectedCategory == null) AzmEmeraldGreen else AzmBorderSubtle,
-                            selectedBorderColor = AzmEmeraldGreen,
+                            borderColor = if (selectedCategory == null) chipAccent else MaterialTheme.colorScheme.outline,
+                            selectedBorderColor = chipAccent,
                             enabled = true,
                             selected = selectedCategory == null,
                         ),
@@ -198,14 +217,14 @@ fun ExercisePickerSheet(
                         onClick = { selectedCategory = if (isSelected) null else cat },
                         label = { Text(catName) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AzmEmeraldGreen,
-                            selectedLabelColor = AzmDarkBackground,
-                            containerColor = AzmDarkSurface,
-                            labelColor = AzmDarkOnSurfaceMuted,
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = chipAccent,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            borderColor = if (isSelected) AzmEmeraldGreen else AzmBorderSubtle,
-                            selectedBorderColor = AzmEmeraldGreen,
+                            borderColor = if (isSelected) chipAccent else MaterialTheme.colorScheme.outline,
+                            selectedBorderColor = chipAccent,
                             enabled = true,
                             selected = isSelected,
                         ),
@@ -226,24 +245,40 @@ fun ExercisePickerSheet(
                     Text(
                         text = stringResource(R.string.picker_empty_search),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false),
                 ) {
-                    items(filteredExercises, key = { it.id }) { exercise ->
+                    itemsIndexed(pagedExercises, key = { _, it -> it.id }) { index, exercise ->
+                        val isSelected = selectedExercises.any { it.id == exercise.id }
+                        val itemAccent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(64.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .border(1.dp, AzmBorderSubtle, RoundedCornerShape(14.dp))
-                                .clickable { onSelectExercise(exercise) },
+                                .height(68.dp)
+                                .azmPhysicsItemEntrance(index = index)
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(
+                                    width = if (isSelected) 1.5.dp else 1.dp,
+                                    color = if (isSelected) itemAccent else MaterialTheme.colorScheme.outline,
+                                    shape = RoundedCornerShape(16.dp),
+                                )
+                                .azmPhysicsPress(pressedScale = 0.96f) {
+                                    if (isSelected) {
+                                        selectedExercises.removeAll { it.id == exercise.id }
+                                    } else {
+                                        selectedExercises.add(exercise)
+                                    }
+                                },
                             colors = CardDefaults.cardColors(
-                                containerColor = AzmDarkSurface,
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                             ),
                         ) {
                             Row(
@@ -254,18 +289,30 @@ fun ExercisePickerSheet(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Column {
-                                    Text(
-                                        text = exercise.nameAr,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = AzmDarkOnSurface,
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Icon(
+                                        imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                                        contentDescription = null,
+                                        tint = if (isSelected) itemAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp),
                                     )
-                                    Text(
-                                        text = exercise.nameEn,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = AzmDarkOnSurfaceMuted,
-                                    )
+                                    Column {
+                                        Text(
+                                            text = exercise.nameAr,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) itemAccent else MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = exercise.nameEn,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
 
                                 Row(
@@ -276,13 +323,13 @@ fun ExercisePickerSheet(
                                         Box(
                                             modifier = Modifier
                                                 .clip(CircleShape)
-                                                .background(AzmDarkSurfaceVariant)
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                                 .padding(horizontal = 8.dp, vertical = 2.dp),
                                         ) {
                                             Text(
                                                 text = stringResource(R.string.badge_custom),
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = AzmEmeraldGreen,
+                                                color = itemAccent,
                                                 fontSize = 10.sp,
                                             )
                                         }
@@ -291,8 +338,31 @@ fun ExercisePickerSheet(
                                     Text(
                                         text = categoryDisplayName(exercise.category),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = AzmDarkOnSurfaceMuted,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (hasMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                TextButton(
+                                    onClick = { page++ },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
+                                    ),
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.catalog_load_more),
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
@@ -300,6 +370,26 @@ fun ExercisePickerSheet(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Sticky Bottom Multi-Select Confirmation Button
+            AzmPrimaryButton(
+                text = if (selectedExercises.isEmpty()) {
+                    "حدد التمارين التي ترغب بإضافتها للجلسة"
+                } else {
+                    "✓ إضافة التمارين المحددة (${selectedExercises.size} تمارين)"
+                },
+                onClick = {
+                    if (selectedExercises.isNotEmpty()) {
+                        onSelectExercises(selectedExercises.toList())
+                        onDismiss()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+            )
         }
     }
 
@@ -310,12 +400,12 @@ fun ExercisePickerSheet(
 
         AlertDialog(
             onDismissRequest = { showCustomDialog = false },
-            containerColor = AzmDarkSurface,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Text(
                     text = stringResource(R.string.picker_create_custom),
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             },
             text = {
@@ -328,30 +418,33 @@ fun ExercisePickerSheet(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AzmEmeraldGreen,
-                            unfocusedBorderColor = AzmBorderSubtle,
-                            focusedTextColor = AzmDarkOnSurface,
-                            unfocusedTextColor = AzmDarkOnSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = stringResource(R.string.exercise_category_label),
                         style = MaterialTheme.typography.labelSmall,
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         items(MuscleCategory.entries.toTypedArray()) { cat ->
+                            val chipAccent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
                             FilterChip(
                                 selected = customCategory == cat,
                                 onClick = { customCategory = cat },
                                 label = { Text(categoryDisplayName(cat), fontSize = 12.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = AzmEmeraldGreen,
-                                    selectedLabelColor = AzmDarkBackground,
-                                    containerColor = AzmDarkSurfaceVariant,
-                                    labelColor = AzmDarkOnSurfaceMuted,
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = chipAccent,
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 ),
                             )
                         }
@@ -368,8 +461,8 @@ fun ExercisePickerSheet(
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AzmEmeraldGreen,
-                        contentColor = AzmDarkBackground,
+                        containerColor = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White,
                     ),
                 ) {
                     Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
@@ -377,7 +470,7 @@ fun ExercisePickerSheet(
             },
             dismissButton = {
                 TextButton(onClick = { showCustomDialog = false }) {
-                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                    Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
         )

@@ -41,6 +41,7 @@ data class ActiveSessionUiState(
     // Continuous timer
     val elapsedSeconds: Long = 0L,
     val isPaused: Boolean = false,
+    val isWorkoutStarted: Boolean = false,
 
     // Rest timer overlay (Figma #87:1879)
     val isRestTimerVisible: Boolean = false,
@@ -114,7 +115,10 @@ class ActiveSessionViewModel(
 
                         val currentEx = _uiState.value.currentExercise?.let { current ->
                             sessionDetails.exercises.find { it.workoutExercise.id == current.workoutExercise.id }
-                        } ?: sessionDetails.exercises.firstOrNull()
+                        }
+
+                        val hasCompletedAnySet = sessionDetails.exercises.any { it.sets.any { set -> set.isCompleted } }
+                        val isStarted = _uiState.value.isWorkoutStarted || hasCompletedAnySet
 
                         _uiState.update {
                             it.copy(
@@ -122,6 +126,7 @@ class ActiveSessionViewModel(
                                 participants = participants,
                                 activeTurnMemberId = currentTurn,
                                 currentExercise = currentEx,
+                                isWorkoutStarted = isStarted,
                                 isPaused = sessionDetails.session.status == "PAUSED",
                                 isLoading = false,
                             )
@@ -130,7 +135,7 @@ class ActiveSessionViewModel(
                         // Pre-fill steppers for the active turn member
                         updateSteppersForActiveTurn()
 
-                        if (timerJob == null || timerJob?.isActive != true) {
+                        if (isStarted && (timerJob == null || timerJob?.isActive != true)) {
                             startElapsedTicker()
                         }
                     }
@@ -143,7 +148,7 @@ class ActiveSessionViewModel(
         timerJob = viewModelScope.launch {
             while (isActive && _uiState.value.sessionWithDetails != null && !_uiState.value.isSessionFinished && !_uiState.value.isSessionCancelled) {
                 val session = _uiState.value.sessionWithDetails?.session
-                if (session != null && !_uiState.value.isPaused) {
+                if (session != null && !_uiState.value.isPaused && _uiState.value.isWorkoutStarted) {
                     val now = System.currentTimeMillis()
                     val activeDurationMs = (now - session.startedAt - session.pausedTotalMs).coerceAtLeast(0L)
                     _uiState.update { it.copy(elapsedSeconds = activeDurationMs / 1000L) }
@@ -199,10 +204,26 @@ class ActiveSessionViewModel(
         updateSteppersForActiveTurn()
     }
 
-    /** Switches active exercise card view. */
-    fun selectExercise(exercise: WorkoutExerciseWithSets) {
+    /** Switches active exercise card view, or null to return to today's exercises list. */
+    fun selectExercise(exercise: WorkoutExerciseWithSets?) {
         _uiState.update { it.copy(currentExercise = exercise) }
-        updateSteppersForActiveTurn()
+        if (exercise != null) {
+            updateSteppersForActiveTurn()
+        }
+    }
+
+    /** Removes an exercise from the active session. */
+    fun removeExercise(workoutExerciseId: Long) {
+        viewModelScope.launch {
+            try {
+                workoutRepository.removeExerciseFromSession(workoutExerciseId)
+                if (_uiState.value.currentExercise?.workoutExercise?.id == workoutExerciseId) {
+                    _uiState.update { it.copy(currentExercise = null) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message ?: "Failed to remove exercise") }
+            }
+        }
     }
 
     /** Adjusts weight stepper by delta (e.g. +2.5 or -2.5 kg). */
@@ -245,9 +266,6 @@ class ActiveSessionViewModel(
                 )
                 workoutRepository.markSetCompleted(setId)
 
-                // Start rest timer (90s default)
-                startRestTimer(90)
-
                 // Advance turn to next participant
                 val participants = _uiState.value.participants
                 if (participants.isNotEmpty()) {
@@ -256,6 +274,13 @@ class ActiveSessionViewModel(
                     val nextMemberId = participants[nextIndex].id
                     _uiState.update { it.copy(activeTurnMemberId = nextMemberId) }
                     updateSteppersForActiveTurn()
+
+                    // Start rest timer only when solo or when a full cycle across all participants completes
+                    if (participants.size <= 1 || nextIndex == 0) {
+                        startRestTimer(90)
+                    }
+                } else {
+                    startRestTimer(90)
                 }
             } finally {
                 delay(300L)
@@ -285,6 +310,40 @@ class ActiveSessionViewModel(
         _uiState.update {
             val newTime = (it.restTimerRemainingSeconds + secondsDelta).coerceAtLeast(0)
             it.copy(restTimerRemainingSeconds = newTime)
+        }
+    }
+
+    /** Starts the actual workout timer and begins the first exercise. */
+    fun startWorkout() {
+        val sessionWithDetails = _uiState.value.sessionWithDetails ?: return
+        val firstExercise = sessionWithDetails.exercises.firstOrNull()
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            workoutRepository.updateSessionStartedAt(sessionWithDetails.session.id, now)
+            _uiState.update {
+                it.copy(
+                    isWorkoutStarted = true,
+                    elapsedSeconds = 0L,
+                    currentExercise = it.currentExercise ?: firstExercise,
+                )
+            }
+            updateSteppersForActiveTurn()
+            startElapsedTicker()
+        }
+    }
+
+    /** Adds multiple exercises from domain model to the active session. */
+    fun addExercises(exercises: List<com.example.azm_gymtracker.domain.model.Exercise>) {
+        val session = _uiState.value.sessionWithDetails?.session ?: return
+        viewModelScope.launch {
+            try {
+                for (ex in exercises) {
+                    val name = ex.nameAr.ifBlank { ex.nameEn }
+                    workoutRepository.addExerciseToSession(session.id, ex.id, name)
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message ?: "Failed to add exercises") }
+            }
         }
     }
 

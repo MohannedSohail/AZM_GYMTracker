@@ -14,8 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.example.azm_gymtracker.ui.animation.azmPhysicsItemEntrance
+import com.example.azm_gymtracker.ui.animation.azmPhysicsPress
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,7 +92,7 @@ fun HistoryScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AzmDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             AzmBottomNavigation(
                 currentTab = AzmNavTab.HISTORY,
@@ -96,10 +100,12 @@ fun HistoryScreen(
             )
         },
     ) { innerPadding ->
+        val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .statusBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -110,13 +116,13 @@ fun HistoryScreen(
                         text = stringResource(R.string.history_title),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
-                        color = AzmDarkOnSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.history_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -132,7 +138,7 @@ fun HistoryScreen(
                     HistoryParticipantChip(
                         name = stringResource(R.string.picker_category_all),
                         char = "★",
-                        color = AzmEmeraldGreen,
+                        color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                         isSelected = uiState.selectedMemberId == null,
                         onClick = { onSelectMemberFilter(null) },
                     )
@@ -161,13 +167,13 @@ fun HistoryScreen(
                             .padding(vertical = 32.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(color = AzmEmeraldGreen)
+                        CircularProgressIndicator(color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary)
                     }
                 }
             }
 
-            // Dynamic Session Cards
-            items(uiState.sessionsWithDetails, key = { it.session.id }) { item ->
+            // Dynamic Session Cards with Physics Entrance
+            itemsIndexed(uiState.sessionsWithDetails, key = { _, it -> it.session.id }) { index, item ->
                 val session = item.session
                 val participants = item.participants
                 val exercises = item.exercises
@@ -197,9 +203,10 @@ fun HistoryScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .azmPhysicsItemEntrance(index = index)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(AzmDarkSurface)
-                        .border(1.dp, AzmBorderSubtle, RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(24.dp))
                         .padding(16.dp),
                 ) {
                     // Header row with date (Start) & toggle arrow / delete (End)
@@ -214,7 +221,7 @@ fun HistoryScreen(
                             text = dateText,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = AzmDarkOnSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
 
                         Row(
@@ -224,7 +231,7 @@ fun HistoryScreen(
                             Icon(
                                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                 contentDescription = null,
-                                tint = AzmDarkOnSurfaceMuted,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             androidx.compose.material3.IconButton(
                                 onClick = { sessionToDelete = session.id },
@@ -233,7 +240,7 @@ fun HistoryScreen(
                                 Icon(
                                     imageVector = androidx.compose.material.icons.Icons.Default.DateRange,
                                     contentDescription = stringResource(R.string.action_delete),
-                                    tint = AzmDarkOnSurfaceMuted,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(18.dp),
                                 )
                             }
@@ -244,7 +251,7 @@ fun HistoryScreen(
                     Text(
                         text = "$durationMinutes دقيقة • ${exercises.size} تمارين • $totalSets جولة",
                         style = MaterialTheme.typography.bodySmall,
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.Start),
                     )
 
@@ -261,20 +268,20 @@ fun HistoryScreen(
                                 text = "$volumeFormatted kg",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = AzmEmeraldGreen,
+                                color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                             )
                         }
 
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(AzmDarkSurfaceVariant)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(horizontal = 10.dp, vertical = 4.dp),
                         ) {
                             Text(
                                 text = "${participants.size} مشاركين",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AzmEmeraldGreen,
+                                color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                             )
                         }
                     }
@@ -285,7 +292,7 @@ fun HistoryScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(1.dp)
-                                .background(AzmBorderSubtle),
+                                .background(MaterialTheme.colorScheme.outline),
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -298,7 +305,7 @@ fun HistoryScreen(
                                 text = exName,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = AzmDarkOnSurface,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.align(Alignment.Start),
                             )
 
@@ -309,10 +316,10 @@ fun HistoryScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
-                                Text("المشارك", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
-                                Text("الجولة", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
-                                Text("كجم", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
-                                Text("التكرارات", style = MaterialTheme.typography.bodySmall, color = AzmDarkOnSurfaceMuted, modifier = Modifier.weight(1f))
+                                Text("المشارك", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                                Text("الجولة", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                                Text("كجم", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                                Text("التكرارات", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                             }
 
                             Spacer(modifier = Modifier.height(6.dp))
@@ -342,7 +349,7 @@ fun HistoryScreen(
                             TextButton(onClick = { sessionToDelete = session.id }) {
                                 Text(
                                     text = stringResource(R.string.action_delete),
-                                    color = AzmError,
+                                    color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -364,13 +371,13 @@ fun HistoryScreen(
                         Text(
                             text = stringResource(R.string.history_empty),
                             style = MaterialTheme.typography.titleLarge,
-                            color = AzmDarkOnSurface,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = stringResource(R.string.history_empty_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = AzmDarkOnSurfaceMuted,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -386,18 +393,18 @@ fun HistoryScreen(
     sessionToDelete?.let { sessionId ->
         AlertDialog(
             onDismissRequest = { sessionToDelete = null },
-            containerColor = AzmDarkSurface,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Text(
                     text = stringResource(R.string.history_delete_dialog_title),
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                 )
             },
             text = {
                 Text(
                     text = stringResource(R.string.history_delete_dialog_msg),
-                    color = AzmDarkOnSurfaceMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
             confirmButton = {
@@ -409,14 +416,14 @@ fun HistoryScreen(
                 ) {
                     Text(
                         text = stringResource(R.string.action_delete),
-                        color = AzmError,
+                        color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold,
                     )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { sessionToDelete = null }) {
-                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurface)
+                    Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
         )
@@ -431,11 +438,14 @@ private fun HistoryParticipantChip(
     isSelected: Boolean = false,
     onClick: () -> Unit = {},
 ) {
+    val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+    val accent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+
     Row(
         modifier = Modifier
             .clip(CircleShape)
-            .background(if (isSelected) AzmDarkSurfaceSelected else AzmDarkSurface)
-            .border(1.dp, if (isSelected) AzmEmeraldGreen else AzmBorderSubtle, CircleShape)
+            .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+            .border(1.dp, if (isSelected) accent else MaterialTheme.colorScheme.outline, CircleShape)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -451,7 +461,7 @@ private fun HistoryParticipantChip(
             text = if (isSelected) "$name ✓" else name,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) AzmDarkOnSurface else AzmDarkOnSurfaceMuted,
+            color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -468,18 +478,18 @@ private fun SavedRoundRow(
             .fillMaxWidth()
             .height(40.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(AzmDarkSurfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(participant, style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface, modifier = Modifier.weight(1f))
-        Text(round, style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface, modifier = Modifier.weight(1f))
+        Text(participant, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Text(round, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Text(kg, style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface, modifier = Modifier.weight(1f))
+            Text(kg, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         }
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Text(reps, style = MaterialTheme.typography.bodyMedium, color = AzmDarkOnSurface, modifier = Modifier.weight(1f))
+            Text(reps, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         }
     }
     Spacer(modifier = Modifier.height(4.dp))
@@ -491,12 +501,15 @@ private fun HistoryCompactSessionCard(
     metadata: String,
     badge: String? = null,
 ) {
+    val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+    val accent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(AzmDarkSurface)
-            .border(1.dp, AzmBorderSubtle, RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -510,13 +523,13 @@ private fun HistoryCompactSessionCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(AzmDarkBackground),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = null,
-                    tint = AzmEmeraldGreen,
+                    tint = accent,
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -530,13 +543,13 @@ private fun HistoryCompactSessionCard(
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(AzmDarkSurfaceVariant)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(horizontal = 8.dp, vertical = 2.dp),
                         ) {
                             Text(
                                 text = badge,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AzmDarkOnSurfaceMuted,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 10.sp,
                             )
                         }
@@ -545,14 +558,14 @@ private fun HistoryCompactSessionCard(
                         text = date,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AzmDarkOnSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = metadata,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AzmDarkOnSurfaceMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -561,7 +574,7 @@ private fun HistoryCompactSessionCard(
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
             contentDescription = null,
-            tint = AzmDarkOnSurfaceMuted,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp),
         )
     }

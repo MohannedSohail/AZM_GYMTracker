@@ -1,7 +1,7 @@
 
 <resources>
     <string name="app_name">عزم</string>
-    <string name="app_tagline">متتبع التمارين بدون إنترنت</string>
+    <string name="app_tagline">متتبع جولات وتمرين الجيم</string>
 
     <!-- Navigation & Common -->
     <string name="nav_dashboard">الرئيسية</string>
@@ -125,6 +125,7 @@
     <string name="exercise_name_en">الاسم بالإنجليزية (اختياري)</string>
     <string name="exercise_category_label">المجموعة العضلية</string>
     <string name="picker_empty_search">لم يتم العثور على تمارين مطابقة.</string>
+    <string name="catalog_load_more">عرض المزيد</string>
 
     <!-- History (Figma #87:745) -->
     <string name="history_title">سجل التمارين</string>

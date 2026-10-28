@@ -16,13 +16,18 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,57 +35,64 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.azm_gymtracker.R
-import com.example.azm_gymtracker.ui.theme.AzmDarkBackground
 import com.example.azm_gymtracker.ui.theme.AzmEmeraldGreen
 import com.example.azm_gymtracker.ui.theme.AzmNeonGreen
 import com.example.azm_gymtracker.ui.theme.AzmPrimaryGradient
+import com.example.azm_gymtracker.ui.theme.LocalThemeIsDark
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Premium Splash Screen for AZM (عزم — سجّل جولتك)
+ * Features official folded Ayn geometric logo from Figma, layered breathing neon aura,
+ * and authentic Thmanyah typography with smooth spring entrances.
+ */
 @Composable
 fun SplashScreen(
     onSplashFinished: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val currentOnSplashFinished by androidx.compose.runtime.rememberUpdatedState(onSplashFinished)
+    val isDark = LocalThemeIsDark.current
+    val currentOnSplashFinished by rememberUpdatedState(onSplashFinished)
 
-    val logoScale = remember { Animatable(0.3f) }
+    val logoScale = remember { Animatable(0.4f) }
     val logoAlpha = remember { Animatable(0f) }
     val textAlpha = remember { Animatable(0f) }
-    val textOffsetY = remember { Animatable(25f) }
-    val glowAlpha = remember { Animatable(0f) }
+    val textOffsetY = remember { Animatable(20f) }
+    val badgeAlpha = remember { Animatable(0f) }
 
     // Pulsing halo animation
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val infiniteTransition = rememberInfiniteTransition(label = "splashPulse")
     val pulseScale = infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 1.35f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = FastOutSlowInEasing),
+            animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "pulseScale",
     )
     val pulseAlpha = infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 0f,
+        initialValue = 0.45f,
+        targetValue = 0.08f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = FastOutSlowInEasing),
+            animation = tween(1500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "pulseAlpha",
@@ -98,21 +110,26 @@ fun SplashScreen(
             )
         }
         launch {
-            logoAlpha.animateTo(1f, animationSpec = tween(500, easing = LinearEasing))
-            glowAlpha.animateTo(0.6f, animationSpec = tween(700, easing = FastOutSlowInEasing))
+            logoAlpha.animateTo(1f, animationSpec = tween(600, easing = LinearEasing))
         }
 
-        // Step 2: Text reveal after 400ms
-        delay(350)
+        // Step 2: Text reveal after 300ms
+        delay(300)
         launch {
-            textAlpha.animateTo(1f, animationSpec = tween(600, easing = FastOutSlowInEasing))
+            textAlpha.animateTo(1f, animationSpec = tween(550, easing = FastOutSlowInEasing))
         }
         launch {
-            textOffsetY.animateTo(0f, animationSpec = tween(600, easing = FastOutSlowInEasing))
+            textOffsetY.animateTo(0f, animationSpec = tween(550, easing = FastOutSlowInEasing))
         }
 
-        // Step 3: Wait and trigger smooth exit transition
-        delay(1400)
+        // Step 3: Badge reveal after 600ms
+        delay(300)
+        launch {
+            badgeAlpha.animateTo(1f, animationSpec = tween(400, easing = FastOutSlowInEasing))
+        }
+
+        // Wait and proceed smoothly
+        delay(1300)
         currentOnSplashFinished()
     }
 
@@ -121,21 +138,24 @@ fun SplashScreen(
         color = MaterialTheme.colorScheme.background,
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
             contentAlignment = Alignment.Center,
         ) {
-            // Atmospheric Glow in the background
+            // Atmospheric Radial Glow in the background
             Box(
                 modifier = Modifier
-                    .size(260.dp)
+                    .size(320.dp)
                     .scale(pulseScale.value)
-                    .alpha(glowAlpha.value * 0.35f)
+                    .alpha(pulseAlpha.value)
                     .clip(CircleShape)
                     .background(
                         Brush.radialGradient(
                             colors = listOf(
-                                AzmNeonGreen,
-                                AzmEmeraldGreen,
+                                (if (isDark) AzmNeonGreen else MaterialTheme.colorScheme.primary).copy(alpha = if (isDark) 0.35f else 0.18f),
+                                (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primaryContainer).copy(alpha = if (isDark) 0.15f else 0.08f),
                                 Color.Transparent,
                             ),
                         ),
@@ -145,8 +165,12 @@ fun SplashScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = 24.dp),
             ) {
-                // Animated Glowing Emblem
+                val primaryColor = MaterialTheme.colorScheme.primary
+                val rippleColor = if (isDark) AzmNeonGreen else primaryColor
+
+                // Animated Glowing Emblem with the official Figma vector
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
@@ -156,38 +180,44 @@ fun SplashScreen(
                     // Pulsing outer ripple ring
                     Canvas(
                         modifier = Modifier
-                            .size(130.dp)
+                            .size(150.dp)
                             .scale(pulseScale.value)
                             .alpha(pulseAlpha.value),
                     ) {
                         drawCircle(
-                            color = AzmNeonGreen,
-                            style = Stroke(width = 3.dp.toPx()),
+                            color = rippleColor,
+                            style = Stroke(width = 2.dp.toPx()),
                         )
                     }
 
-                    // Main Emblem Container with gradient
+                    // Main Emblem Container
                     Box(
                         modifier = Modifier
-                            .size(96.dp)
-                            .clip(RoundedCornerShape(28.dp))
-                            .background(AzmPrimaryGradient)
-                            .border(2.dp, Color(0xFFC7FFB3), RoundedCornerShape(28.dp)),
+                            .size(110.dp)
+                            .shadow(
+                                elevation = 20.dp,
+                                shape = RoundedCornerShape(32.dp),
+                                spotColor = if (isDark) AzmNeonGreen.copy(alpha = 0.35f) else Color(0x18000000),
+                            )
+                            .clip(RoundedCornerShape(32.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(32.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = "ع",
-                            fontSize = 54.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF041C0E),
-                            textAlign = TextAlign.Center,
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(R.drawable.logo),
+                            contentDescription = "شعار عزم",
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                            modifier = Modifier
+                                .size(88.dp)
+                                .clip(RoundedCornerShape(24.dp)),
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // App Title and Subtitle with slide & fade reveal
+                // Brand Typography: عزم + AZM GYM TRACKER + Tagline
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
@@ -195,31 +225,62 @@ fun SplashScreen(
                         .offset(y = textOffsetY.value.dp),
                 ) {
                     Text(
-                        text = "عــزم",
-                        fontSize = 38.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        text = "عـــزم",
+                        style = MaterialTheme.typography.displayLarge.copy(fontSize = 46.sp),
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
                         letterSpacing = 2.sp,
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = "AZM GYM TRACKER",
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (isDark) AzmNeonGreen else MaterialTheme.colorScheme.primary,
                         letterSpacing = 4.sp,
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = stringResource(R.string.app_tagline),
-                        fontSize = 14.sp,
+                        text = "هاتف واحد. عزم يجمعكم.",
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+
+                Spacer(modifier = Modifier.height(48.dp))
+
+                // Focus Pill Badge at bottom
+                Box(
+                    modifier = Modifier
+                        .alpha(badgeAlpha.value)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(if (isDark) AzmNeonGreen else MaterialTheme.colorScheme.primary),
+                        )
+                        Text(
+                            text = "سجّل جولاتك بدقة • تركيز كامل",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
                 }
             }
         }

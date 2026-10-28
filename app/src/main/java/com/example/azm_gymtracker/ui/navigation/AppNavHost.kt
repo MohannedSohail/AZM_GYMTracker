@@ -10,7 +10,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,6 +56,22 @@ fun AppNavHost(
         factory = HistoryViewModel.Factory(container.workoutRepository, container.memberRepository)
     )
     val historyState by historyViewModel.uiState.collectAsStateWithLifecycle()
+
+    val navigateToTab: (AzmNavTab) -> Unit = { tab ->
+        val targetRoute = when (tab) {
+            AzmNavTab.HOME -> NavRoutes.Dashboard.route
+            AzmNavTab.EXERCISES -> NavRoutes.Exercises.route
+            AzmNavTab.HISTORY -> NavRoutes.History.route
+            AzmNavTab.PROGRESS -> NavRoutes.Progress.route
+        }
+        navController.navigate(targetRoute) {
+            popUpTo(NavRoutes.Dashboard.route) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
 
     // Smooth navigation specs based on Figma motion guidelines (280ms)
     val animationDuration = 280
@@ -174,14 +189,10 @@ fun AppNavHost(
                 onResumeWorkout = {
                     navController.navigate(NavRoutes.ActiveSession.route)
                 },
-                onTabSelected = { tab ->
-                    when (tab) {
-                        AzmNavTab.HOME -> { /* Already here */ }
-                        AzmNavTab.EXERCISES -> navController.navigate(NavRoutes.Exercises.route)
-                        AzmNavTab.HISTORY -> navController.navigate(NavRoutes.History.route)
-                        AzmNavTab.PROGRESS -> navController.navigate(NavRoutes.Progress.route)
-                    }
+                onSelectRecentSession = { session ->
+                    navController.navigate(NavRoutes.WorkoutSummary.createRoute(session.id))
                 },
+                onTabSelected = navigateToTab,
             )
         }
 
@@ -245,9 +256,13 @@ fun AppNavHost(
             ActiveSessionScreen(
                 uiState = sessionState,
                 onAddExercise = { exercise -> sessionViewModel.addExercise(exercise) },
+                onAddExercises = { exercises -> sessionViewModel.addExercises(exercises) },
+                onStartWorkout = { sessionViewModel.startWorkout() },
                 onCreateCustomExercise = { name, category ->
                     sessionViewModel.createCustomExercise(name, category)
                 },
+                onSelectExercise = { sessionViewModel.selectExercise(it) },
+                onRemoveExercise = { sessionViewModel.removeExercise(it) },
                 onAddSet = { workoutExerciseId ->
                     sessionViewModel.addSet(workoutExerciseId, repsRaw = "8", weightRaw = "72.5")
                 },
@@ -270,7 +285,9 @@ fun AppNavHost(
                     sessionViewModel.discardSession()
                     navController.popBackStack()
                 },
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
             )
         }
 
@@ -333,14 +350,7 @@ fun AppNavHost(
                         creatorMemberId = memberState.activeMember?.id,
                     )
                 },
-                onTabSelected = { tab ->
-                    when (tab) {
-                        AzmNavTab.HOME -> navController.navigate(NavRoutes.Dashboard.route)
-                        AzmNavTab.EXERCISES -> { /* Already here */ }
-                        AzmNavTab.HISTORY -> navController.navigate(NavRoutes.History.route)
-                        AzmNavTab.PROGRESS -> navController.navigate(NavRoutes.Progress.route)
-                    }
-                },
+                onTabSelected = navigateToTab,
             )
         }
 
@@ -355,14 +365,7 @@ fun AppNavHost(
                 onSelectSession = { historyViewModel.selectSession(it) },
                 onDeleteSession = { historyViewModel.deleteSession(it) },
                 onNavigateBack = { navController.popBackStack() },
-                onTabSelected = { tab ->
-                    when (tab) {
-                        AzmNavTab.HOME -> navController.navigate(NavRoutes.Dashboard.route)
-                        AzmNavTab.EXERCISES -> navController.navigate(NavRoutes.Exercises.route)
-                        AzmNavTab.HISTORY -> { /* Already here */ }
-                        AzmNavTab.PROGRESS -> navController.navigate(NavRoutes.Progress.route)
-                    }
-                },
+                onTabSelected = navigateToTab,
             )
         }
 
@@ -379,14 +382,7 @@ fun AppNavHost(
                 uiState = progressState,
                 onSelectMember = { progressViewModel.selectMember(it) },
                 onPeriodSelected = { progressViewModel.selectPeriod(it) },
-                onTabSelected = { tab ->
-                    when (tab) {
-                        AzmNavTab.HOME -> navController.navigate(NavRoutes.Dashboard.route)
-                        AzmNavTab.EXERCISES -> navController.navigate(NavRoutes.Exercises.route)
-                        AzmNavTab.HISTORY -> navController.navigate(NavRoutes.History.route)
-                        AzmNavTab.PROGRESS -> { /* Already here */ }
-                    }
-                },
+                onTabSelected = navigateToTab,
             )
         }
     }

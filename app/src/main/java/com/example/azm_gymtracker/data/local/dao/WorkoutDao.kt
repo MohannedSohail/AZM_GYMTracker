@@ -133,6 +133,12 @@ interface WorkoutDao {
     suspend fun updateSessionPausedTime(sessionId: Long, pausedTotalMs: Long)
 
     /**
+     * Updates session start timestamp when user explicitly starts the workout.
+     */
+    @Query("UPDATE workout_sessions SET started_at = :startedAt WHERE id = :sessionId")
+    suspend fun updateSessionStartedAt(sessionId: Long, startedAt: Long = System.currentTimeMillis())
+
+    /**
      * Deletes sessions that have zero remaining participants (e.g. after member deletions).
      */
     @Query("DELETE FROM workout_sessions WHERE id NOT IN (SELECT DISTINCT session_id FROM session_participants)")

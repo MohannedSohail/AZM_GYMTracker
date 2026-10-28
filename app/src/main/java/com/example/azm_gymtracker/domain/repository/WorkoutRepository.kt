@@ -52,6 +52,16 @@ interface WorkoutRepository {
     suspend fun addExerciseToSession(sessionId: Long, exerciseId: Long, exerciseNameSnapshot: String): Long
 
     /**
+     * Removes an exercise and its sets from the active session.
+     */
+    suspend fun removeExerciseFromSession(workoutExerciseId: Long)
+
+    /**
+     * Updates session start timestamp when user explicitly starts the workout.
+     */
+    suspend fun updateSessionStartedAt(sessionId: Long, startedAt: Long = System.currentTimeMillis())
+
+    /**
      * Logs a new set for a specific participant within [workoutExerciseId].
      */
     suspend fun addSet(workoutExerciseId: Long, memberId: Long, reps: Int, weightKg: Float?): Long

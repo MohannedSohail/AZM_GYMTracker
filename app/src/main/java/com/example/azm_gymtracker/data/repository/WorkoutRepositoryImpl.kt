@@ -53,6 +53,10 @@ class WorkoutRepositoryImpl(private val dao: WorkoutDao) : WorkoutRepository {
         return dao.addExerciseToSession(sessionId, exerciseId, exerciseNameSnapshot)
     }
 
+    override suspend fun removeExerciseFromSession(workoutExerciseId: Long) {
+        dao.deleteWorkoutExercise(workoutExerciseId)
+    }
+
     override suspend fun addSet(
         workoutExerciseId: Long,
         memberId: Long,
@@ -88,6 +92,10 @@ class WorkoutRepositoryImpl(private val dao: WorkoutDao) : WorkoutRepository {
 
     override suspend fun updateSessionPausedTime(sessionId: Long, pausedTotalMs: Long) {
         dao.updateSessionPausedTime(sessionId, pausedTotalMs)
+    }
+
+    override suspend fun updateSessionStartedAt(sessionId: Long, startedAt: Long) {
+        dao.updateSessionStartedAt(sessionId, startedAt)
     }
 
     override suspend fun getLastSetForMemberInExercise(

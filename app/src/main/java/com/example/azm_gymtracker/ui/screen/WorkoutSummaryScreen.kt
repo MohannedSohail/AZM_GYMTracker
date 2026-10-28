@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -75,12 +77,14 @@ fun WorkoutSummaryScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AzmDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .statusBarsPadding()
+                .navigationBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -89,7 +93,7 @@ fun WorkoutSummaryScreen(
                 text = stringResource(R.string.workout_summary_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
@@ -97,32 +101,32 @@ fun WorkoutSummaryScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Total Volume Glowing Ring (Figma Node #87:572)
+            // Total Volume Glowing Ring (Figma Node #87:572 & #87:1311)
             Box(
                 modifier = Modifier
                     .size(196.dp)
-                    .shadow(elevation = 24.dp, shape = CircleShape, spotColor = AzmEmeraldGreen.copy(alpha = 0.25f))
+                    .shadow(elevation = 24.dp, shape = CircleShape, spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                     .clip(CircleShape)
-                    .background(AzmDarkSurfaceSelected)
-                    .border(width = 3.dp, color = AzmEmeraldGreen, shape = CircleShape),
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .border(width = 3.dp, color = MaterialTheme.colorScheme.primary, shape = CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = stringResource(R.string.total_volume_label),
                         style = MaterialTheme.typography.bodySmall,
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                         text = formattedTotalVolume,
                         style = MaterialTheme.typography.displayLarge,
                         fontWeight = FontWeight.Bold,
-                        color = AzmDarkOnSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = stringResource(R.string.unit_kg),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = AzmEmeraldGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
@@ -171,7 +175,7 @@ fun WorkoutSummaryScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp)
                                 .clip(CircleShape)
-                                .background(AzmDarkSurfaceVariant)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(horizontal = 14.dp, vertical = 8.dp),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -201,7 +205,7 @@ fun WorkoutSummaryScreen(
                 Text(
                     text = stringResource(R.string.action_view_details),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AzmEmeraldGreen,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -217,8 +221,8 @@ private fun StatCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(AzmDarkSurface)
-            .border(width = 1.dp, color = AzmBorderSubtle, shape = RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(16.dp))
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -226,12 +230,12 @@ private fun StatCard(
             text = value,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = AzmDarkOnSurface,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = AzmDarkOnSurfaceMuted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -248,8 +252,8 @@ private fun ParticipantResultCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(AzmDarkSurface)
-            .border(width = 1.dp, color = AzmBorderSubtle, shape = RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(16.dp))
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -269,7 +273,7 @@ private fun ParticipantResultCard(
                 text = item.name,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
 
@@ -279,12 +283,12 @@ private fun ParticipantResultCard(
                 text = "$formattedVol كجم",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 text = "${item.totalSets} جولات",
                 style = MaterialTheme.typography.bodySmall,
-                color = AzmDarkOnSurfaceMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

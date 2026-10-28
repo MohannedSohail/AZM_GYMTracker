@@ -138,6 +138,8 @@ class HistoryViewModelTest {
 
         override suspend fun startSession(participantIds: List<Long>): Long = 1L
         override suspend fun addExerciseToSession(sessionId: Long, exerciseId: Long, exerciseNameSnapshot: String): Long = 1L
+        override suspend fun removeExerciseFromSession(workoutExerciseId: Long) {}
+        override suspend fun updateSessionStartedAt(sessionId: Long, startedAt: Long) {}
         override suspend fun addSet(workoutExerciseId: Long, memberId: Long, reps: Int, weightKg: Float?): Long = 1L
         override suspend fun markSetCompleted(setId: Long) {}
         override suspend fun updateSet(set: WorkoutSet) {}

@@ -21,6 +21,32 @@ import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.graphics.graphicsLayer
+import com.example.azm_gymtracker.ui.theme.LocalThemeIsDark
+import com.example.azm_gymtracker.ui.theme.LocalThemeToggle
+import com.example.azm_gymtracker.ui.animation.azmPhysicsPress
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,43 +75,36 @@ import com.example.azm_gymtracker.ui.theme.AzmEmeraldGreen
 import com.example.azm_gymtracker.ui.theme.AzmNeonGreen
 import com.example.azm_gymtracker.ui.theme.AzmPrimaryGradient
 
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Surface
+import androidx.compose.ui.res.painterResource
+
 /**
- * Geometric round emblem of AZM (عزم — رمز الجولة الهندسي)
- * Continuous angled ribbon loop inspired by the Arabic letter Ayn 'ع'.
+ * Geometric folded Ayn emblem of AZM (عزم — رمز الجولة الهندسي)
+ * Official brand mark from Figma.
  */
 @Composable
 fun AzmEmblem(
     modifier: Modifier = Modifier,
     size: Dp = 44.dp,
-    strokeColor: Color = AzmEmeraldGreen,
+    strokeColor: Color = AzmNeonGreen,
 ) {
-    Canvas(modifier = modifier.size(size)) {
-        val strokeWidth = this.size.minDimension * 0.12f
-        val radius = (this.size.minDimension - strokeWidth) / 2f
-        val centerOffset = center
-
-        // Outer atmospheric orbit ring
-        drawCircle(
-            color = strokeColor.copy(alpha = 0.25f),
-            radius = radius,
-            center = centerOffset,
-            style = Stroke(width = strokeWidth * 0.6f)
-        )
-
-        // Geometric dynamic arc track
-        drawArc(
-            color = strokeColor,
-            startAngle = -45f,
-            sweepAngle = 230f,
-            useCenter = false,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-        )
-
-        // Inner core loop point
-        drawCircle(
-            color = AzmNeonGreen,
-            radius = strokeWidth * 0.75f,
-            center = centerOffset
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(RoundedCornerShape(size * 0.25f))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(size * 0.25f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.logo),
+            contentDescription = "شعار عزم",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .size(size * 0.85f)
+                .clip(RoundedCornerShape(size * 0.2f)),
         )
     }
 }
@@ -93,15 +112,19 @@ fun AzmEmblem(
 /**
  * Branded Top Bar (Figma Node #87:264)
  * Contains the AZM Wordmark + Emblem on one side, and "بدون إنترنت" status pill badge on the other.
+ * Includes statusBarsPadding to stay safely below notch and system icons.
  */
 @Composable
 fun AzmTopBar(
     modifier: Modifier = Modifier,
-    isOffline: Boolean = true,
 ) {
+    val isDark = LocalThemeIsDark.current
+    val toggleTheme = LocalThemeToggle.current
+
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -109,39 +132,65 @@ fun AzmTopBar(
         // AZM Wordmark + Geometric Emblem (Start side / Right in RTL)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            AzmEmblem(size = 40.dp)
+            AzmEmblem(size = 42.dp)
             Column(horizontalAlignment = Alignment.Start) {
                 Text(
                     text = "عزم",
                     style = MaterialTheme.typography.headlineLarge.copy(fontSize = 24.sp),
                     fontWeight = FontWeight.Bold,
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "AZM",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AzmDarkOnSurfaceMuted,
+                    text = "AZM GYM TRACKER",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp,
                 )
             }
         }
 
-        // Status Badge: "بدون إنترنت" (End side / Left in RTL)
+        // Actions Row: Theme Toggle Button with beautiful physics animation
+        val iconRotation by animateFloatAsState(
+            targetValue = if (isDark) 360f else 0f,
+            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+            label = "themeIconRotation",
+        )
+        var buttonCenter by remember { mutableStateOf<Offset?>(null) }
         Box(
             modifier = Modifier
+                .size(38.dp)
                 .clip(CircleShape)
-                .background(AzmDarkSurfaceVariant)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                .onGloballyPositioned { coordinates ->
+                    val pos = coordinates.positionInRoot()
+                    buttonCenter = Offset(
+                        pos.x + coordinates.size.width / 2f,
+                        pos.y + coordinates.size.height / 2f,
+                    )
+                }
+                .azmPhysicsPress(pressedScale = 0.88f) { toggleTheme(buttonCenter) },
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = if (isOffline) stringResource(R.string.status_offline) else "",
-                style = MaterialTheme.typography.bodySmall,
-                color = AzmEmeraldGreen,
-                fontWeight = FontWeight.Medium,
-            )
+            AnimatedContent(
+                targetState = isDark,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.3f) + slideInVertically { it / 2 })
+                        .togetherWith(fadeOut(animationSpec = tween(200)) + scaleOut(targetScale = 0.3f) + slideOutVertically { -it / 2 })
+                },
+                label = "themeIconContent",
+            ) { dark ->
+                Icon(
+                    imageVector = if (dark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                    contentDescription = if (dark) "الوضع الفاتح" else "الوضع الداكن",
+                    tint = if (dark) Color(0xFFFFD54F) else AzmEmeraldGreen,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .graphicsLayer { rotationZ = iconRotation },
+                )
+            }
         }
     }
 }
@@ -150,6 +199,7 @@ fun AzmTopBar(
  * 4-Destination Bottom Navigation Bar (Figma Node #87:327)
  * Tabs: الرئيسية (Home), التمارين (Exercises), السجل (History), التقدم (Progress)
  * Selected destination: container #153E27, rounded 16dp, text & icon in #3FE779
+ * Includes navigationBarsPadding to stay safely above Android navigation and gesture bar.
  */
 enum class AzmNavTab {
     HOME, EXERCISES, HISTORY, PROGRESS
@@ -161,51 +211,57 @@ fun AzmBottomNavigation(
     onTabSelected: (AzmNavTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
         modifier = modifier
             .fillMaxWidth()
-            .height(70.dp)
-            .background(AzmDarkSurface)
-            .border(width = 1.dp, color = AzmBorderSubtle, shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
     ) {
-        // Tab 4: التقدم (Progress)
-        AzmNavItem(
-            title = stringResource(R.string.nav_progress),
-            icon = Icons.AutoMirrored.Filled.ShowChart,
-            isSelected = currentTab == AzmNavTab.PROGRESS,
-            onClick = { onTabSelected(AzmNavTab.PROGRESS) },
-            modifier = Modifier.weight(1f),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(68.dp)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Tab 4: التقدم (Progress)
+            AzmNavItem(
+                title = stringResource(R.string.nav_progress),
+                icon = Icons.AutoMirrored.Filled.ShowChart,
+                isSelected = currentTab == AzmNavTab.PROGRESS,
+                onClick = { onTabSelected(AzmNavTab.PROGRESS) },
+                modifier = Modifier.weight(1f),
+            )
 
-        // Tab 3: السجل (History)
-        AzmNavItem(
-            title = stringResource(R.string.nav_history),
-            icon = Icons.Default.DateRange,
-            isSelected = currentTab == AzmNavTab.HISTORY,
-            onClick = { onTabSelected(AzmNavTab.HISTORY) },
-            modifier = Modifier.weight(1f),
-        )
+            // Tab 3: السجل (History)
+            AzmNavItem(
+                title = stringResource(R.string.nav_history),
+                icon = Icons.Default.DateRange,
+                isSelected = currentTab == AzmNavTab.HISTORY,
+                onClick = { onTabSelected(AzmNavTab.HISTORY) },
+                modifier = Modifier.weight(1f),
+            )
 
-        // Tab 2: التمارين (Exercises)
-        AzmNavItem(
-            title = stringResource(R.string.nav_exercises),
-            icon = Icons.Default.FitnessCenter,
-            isSelected = currentTab == AzmNavTab.EXERCISES,
-            onClick = { onTabSelected(AzmNavTab.EXERCISES) },
-            modifier = Modifier.weight(1f),
-        )
+            // Tab 2: التمارين (Exercises)
+            AzmNavItem(
+                title = stringResource(R.string.nav_exercises),
+                icon = Icons.Default.FitnessCenter,
+                isSelected = currentTab == AzmNavTab.EXERCISES,
+                onClick = { onTabSelected(AzmNavTab.EXERCISES) },
+                modifier = Modifier.weight(1f),
+            )
 
-        // Tab 1: الرئيسية (Home)
-        AzmNavItem(
-            title = stringResource(R.string.nav_dashboard),
-            icon = Icons.Default.Home,
-            isSelected = currentTab == AzmNavTab.HOME,
-            onClick = { onTabSelected(AzmNavTab.HOME) },
-            modifier = Modifier.weight(1f),
-        )
+            // Tab 1: الرئيسية (Home)
+            AzmNavItem(
+                title = stringResource(R.string.nav_dashboard),
+                icon = Icons.Default.Home,
+                isSelected = currentTab == AzmNavTab.HOME,
+                onClick = { onTabSelected(AzmNavTab.HOME) },
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
@@ -220,7 +276,7 @@ private fun AzmNavItem(
     val backgroundModifier = if (isSelected) {
         Modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(AzmDarkSurfaceSelected)
+            .background(MaterialTheme.colorScheme.primaryContainer)
     } else {
         Modifier.clip(RoundedCornerShape(16.dp))
     }
@@ -237,14 +293,14 @@ private fun AzmNavItem(
             imageVector = icon,
             contentDescription = title,
             modifier = Modifier.size(22.dp),
-            tint = if (isSelected) AzmEmeraldGreen else AzmDarkOnSurfaceMuted,
+            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) AzmEmeraldGreen else AzmDarkOnSurfaceMuted,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 11.sp,
         )
     }
@@ -309,7 +365,7 @@ fun AzmPrimaryButton(
 }
 
 /**
- * Secondary Button (Figma: Height 56dp, Pill 999dp, #10271C, border #284237, text 16sp Bold #F4FFF5)
+ * Secondary Button (Figma: Height 56dp, Pill 999dp, surfaceVariant, border outline, text onSurface)
  */
 @Composable
 fun AzmSecondaryButton(
@@ -323,8 +379,8 @@ fun AzmSecondaryButton(
             .fillMaxWidth()
             .height(56.dp)
             .clip(CircleShape)
-            .background(AzmDarkSurfaceVariant)
-            .border(width = 1.dp, color = AzmBorderSubtle, shape = CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = CircleShape)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -332,7 +388,7 @@ fun AzmSecondaryButton(
             text = text,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = AzmDarkOnSurface,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

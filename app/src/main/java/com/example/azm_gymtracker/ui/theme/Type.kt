@@ -6,9 +6,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.ui.text.font.Font
+import com.example.azm_gymtracker.R
+
 // Arabic Thmanyah Sans typography scale from Figma (Node #29:1840)
-// With fallback to system Arabic typeface ensuring baseline integrity
-val ThmanyahSansFamily = FontFamily.Default
+val ThmanyahSansFamily = FontFamily(
+    Font(R.font.thmanyah_regular, FontWeight.Normal),
+    Font(R.font.thmanyah_medium, FontWeight.Medium),
+    Font(R.font.thmanyah_bold, FontWeight.Bold),
+    Font(R.font.thmanyah_black, FontWeight.Black)
+)
 
 val Typography = Typography(
     // 48 / أرقام العرض (Black 900)

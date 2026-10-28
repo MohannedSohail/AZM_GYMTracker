@@ -32,12 +32,12 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = AzmDeepGreen,
+    primary = AzmLightPrimary,
     onPrimary = Color.White,
     primaryContainer = AzmLightSurfaceSelected,
-    onPrimaryContainer = AzmDeepGreen,
-    secondary = AzmEmeraldGreen,
-    onSecondary = AzmLightOnSurface,
+    onPrimaryContainer = AzmLightPrimary,
+    secondary = AzmDeepGreen,
+    onSecondary = Color.White,
     tertiary = MemberColorGold,
     background = AzmLightBackground,
     onBackground = AzmLightOnSurface,
@@ -46,31 +46,60 @@ private val LightColorScheme = lightColorScheme(
     surfaceVariant = AzmLightSurfaceVariant,
     onSurfaceVariant = AzmLightOnSurfaceMuted,
     outline = AzmLightBorder,
-    error = AzmError,
+    error = AzmLightError,
     onError = Color.White,
 )
+
+fun interface ThemeToggleController {
+    operator fun invoke(origin: androidx.compose.ui.geometry.Offset?)
+}
+
+operator fun ThemeToggleController.invoke() = invoke(null)
+
+val LocalThemeIsDark = androidx.compose.runtime.compositionLocalOf { true }
+val LocalThemeToggle = androidx.compose.runtime.compositionLocalOf { ThemeToggleController { _ -> } }
 
 @Composable
 fun AZM_GYMTrackerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    onToggleTheme: ThemeToggleController = ThemeToggleController { _ -> },
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val targetColorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                window.statusBarColor = colorScheme.background.toArgb()
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+                window.statusBarColor = targetColorScheme.background.toArgb()
+                window.navigationBarColor = targetColorScheme.background.toArgb()
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !darkTheme
+                insetsController.isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalThemeIsDark provides darkTheme,
+        LocalThemeToggle provides onToggleTheme,
+    ) {
+        MaterialTheme(
+            colorScheme = targetColorScheme,
+            typography = Typography,
+            content = content,
+        )
+    }
 }
+
+@Composable
+fun AZM_GYMTrackerTheme(
+    darkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+    content: @Composable () -> Unit,
+) = AZM_GYMTrackerTheme(
+    darkTheme = darkTheme,
+    onToggleTheme = ThemeToggleController { onToggleTheme() },
+    content = content,
+)

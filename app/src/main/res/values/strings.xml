@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">AZM</string>
-    <string name="app_tagline">Your Offline Gym Tracker</string>
+    <string name="app_tagline">Your Gym Workout Companion</string>
 
     <!-- Navigation & Common -->
     <string name="nav_dashboard">Home</string>
@@ -22,7 +22,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_title">Welcome to AZM</string>
-    <string name="onboarding_subtitle">Add your first member profile to start tracking workouts offline.</string>
+    <string name="onboarding_subtitle">Add your first member profile to start tracking workouts.</string>
     <string name="member_name_hint">Member Name</string>
     <string name="member_color_label">Select Profile Color</string>
     <string name="onboarding_create_button">Get Started</string>
@@ -124,6 +124,7 @@
     <string name="exercise_name_en">English Name (Optional)</string>
     <string name="exercise_category_label">Muscle Group</string>
     <string name="picker_empty_search">No exercises found.</string>
+    <string name="catalog_load_more">Load More</string>
 
     <!-- History (Figma #87:745) -->
     <string name="history_title">Workout History</string>

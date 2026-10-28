@@ -14,9 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import com.example.azm_gymtracker.ui.animation.azmPhysicsItemEntrance
+import com.example.azm_gymtracker.ui.animation.azmPhysicsPress
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -74,6 +79,8 @@ fun ExercisesScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf<MuscleCategory?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
+    var page by remember(searchQuery, selectedCategory) { mutableIntStateOf(1) }
+    val pageSize = 15
 
     val filteredExercises = remember(exercises, searchQuery, selectedCategory) {
         exercises.filter { exercise ->
@@ -85,9 +92,14 @@ fun ExercisesScreen(
         }
     }
 
+    val pagedExercises = remember(filteredExercises, page) {
+        filteredExercises.take(page * pageSize)
+    }
+    val hasMore = pagedExercises.size < filteredExercises.size
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = AzmDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             AzmBottomNavigation(
                 currentTab = AzmNavTab.EXERCISES,
@@ -112,7 +124,7 @@ fun ExercisesScreen(
                         text = stringResource(R.string.custom_exercise_fab),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AzmDarkBackground,
+                        color = Color(0xFF041C0E),
                     )
                 }
             }
@@ -123,6 +135,7 @@ fun ExercisesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .statusBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
             // Heading: "كل التمارين"
@@ -130,7 +143,7 @@ fun ExercisesScreen(
                 text = stringResource(R.string.exercises_library_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(vertical = 4.dp),
             )
 
@@ -143,25 +156,25 @@ fun ExercisesScreen(
                 placeholder = {
                     Text(
                         text = stringResource(R.string.search_exercise_hint),
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = null,
-                        tint = AzmDarkOnSurfaceMuted,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = AzmEmeraldGreen,
-                    unfocusedBorderColor = AzmBorderSubtle,
-                    focusedContainerColor = AzmDarkSurface,
-                    unfocusedContainerColor = AzmDarkSurface,
-                    focusedTextColor = AzmDarkOnSurface,
-                    unfocusedTextColor = AzmDarkOnSurface,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -222,7 +235,7 @@ fun ExercisesScreen(
             Text(
                 text = "${filteredExercises.size} تمرينًا • جاهزة ومخصصة",
                 style = MaterialTheme.typography.bodySmall,
-                color = AzmDarkOnSurfaceMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.Start),
             )
 
@@ -233,11 +246,29 @@ fun ExercisesScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(filteredExercises, key = { it.id }) { exercise ->
+                itemsIndexed(pagedExercises, key = { _, it -> it.id }) { index, exercise ->
                     ExerciseCardItem(
                         exercise = exercise,
                         onClick = { onSelectExercise(exercise) },
+                        modifier = Modifier.azmPhysicsItemEntrance(index = index),
                     )
+                }
+
+                if (hasMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            com.example.azm_gymtracker.ui.component.AzmSecondaryButton(
+                                text = "عرض المزيد (${filteredExercises.size - pagedExercises.size} تمرين متبقي)",
+                                onClick = { page += 1 },
+                                modifier = Modifier.fillMaxWidth(0.9f),
+                            )
+                        }
+                    }
                 }
 
                 item {
@@ -251,14 +282,15 @@ fun ExercisesScreen(
         var nameArInput by remember { mutableStateOf("") }
         var nameEnInput by remember { mutableStateOf("") }
         var selectedCat by remember { mutableStateOf(MuscleCategory.CHEST) }
+        val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
 
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            containerColor = AzmDarkSurface,
+            containerColor = MaterialTheme.colorScheme.surface,
             title = {
                 Text(
                     text = stringResource(R.string.picker_create_custom),
-                    color = AzmDarkOnSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                 )
             },
@@ -270,10 +302,12 @@ fun ExercisesScreen(
                         label = { Text(stringResource(R.string.exercise_name_ar)) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AzmEmeraldGreen,
-                            unfocusedBorderColor = AzmBorderSubtle,
-                            focusedTextColor = AzmDarkOnSurface,
-                            unfocusedTextColor = AzmDarkOnSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -284,10 +318,12 @@ fun ExercisesScreen(
                         label = { Text(stringResource(R.string.exercise_name_en)) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AzmEmeraldGreen,
-                            unfocusedBorderColor = AzmBorderSubtle,
-                            focusedTextColor = AzmDarkOnSurface,
-                            unfocusedTextColor = AzmDarkOnSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -295,7 +331,7 @@ fun ExercisesScreen(
                     Text(
                         text = stringResource(R.string.exercise_category_label),
                         style = MaterialTheme.typography.bodySmall,
-                        color = AzmDarkOnSurfaceMuted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     Row(
@@ -335,14 +371,14 @@ fun ExercisesScreen(
                 ) {
                     Text(
                         text = stringResource(R.string.action_save),
-                        color = AzmEmeraldGreen,
+                        color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                     )
                 }
             },
             dismissButton = {
                 androidx.compose.material3.TextButton(onClick = { showCreateDialog = false }) {
-                    Text(stringResource(R.string.action_cancel), color = AzmDarkOnSurfaceMuted)
+                    Text(stringResource(R.string.action_cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             },
         )
@@ -355,9 +391,11 @@ private fun MuscleFilterChip(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val bg = if (isSelected) AzmDarkSurfaceSelected else AzmDarkSurface
-    val border = if (isSelected) AzmEmeraldGreen else AzmBorderSubtle
-    val textCol = if (isSelected) AzmEmeraldGreen else AzmDarkOnSurface
+    val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+    val accent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+    val bg = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    val border = if (isSelected) accent else MaterialTheme.colorScheme.outline
+    val textCol = if (isSelected) accent else MaterialTheme.colorScheme.onSurface
 
     Box(
         modifier = Modifier
@@ -383,13 +421,16 @@ private fun ExerciseCardItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isDark = com.example.azm_gymtracker.ui.theme.LocalThemeIsDark.current
+    val accent = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(AzmDarkSurface)
-            .border(width = 1.dp, color = AzmBorderSubtle, shape = RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(16.dp))
+            .azmPhysicsPress(pressedScale = 0.96f, onClick = onClick)
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -405,13 +446,13 @@ private fun ExerciseCardItem(
                 text = exercise.nameAr,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = AzmDarkOnSurface,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = exercise.nameEn,
                 style = MaterialTheme.typography.bodySmall,
-                color = AzmDarkOnSurfaceMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (exercise.isCustom) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -419,13 +460,13 @@ private fun ExerciseCardItem(
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(AzmDarkSurfaceVariant)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                             .padding(horizontal = 8.dp, vertical = 2.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.badge_custom),
                             style = MaterialTheme.typography.bodySmall,
-                            color = AzmEmeraldGreen,
+                            color = accent,
                             fontSize = 10.sp,
                         )
                     }
@@ -438,7 +479,7 @@ private fun ExerciseCardItem(
             modifier = Modifier
                 .size(72.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(AzmDarkSurfaceSelected),
+                .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
             Text(
