@@ -1,6 +1,7 @@
 package com.example.azm_gymtracker.ui.screen
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.azm_gymtracker.ui.util.getExerciseCategoryDrawable
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RadioButtonChecked
@@ -276,8 +280,10 @@ fun ActiveSessionScreen(
             ) {
                 uiState.participants.forEach { member ->
                     val isTurn = member.id == uiState.activeTurnMemberId
-                    val currentExSetsCount = uiState.currentExercise?.sets?.count { it.memberId == member.id && it.isCompleted } ?: 0
-                    val setsBadge = if (uiState.currentExercise != null && currentExSetsCount > 0) " (${currentExSetsCount}✓)" else ""
+                    val currentExSetsCount =
+                        uiState.currentExercise?.sets?.count { it.memberId == member.id && it.isCompleted } ?: 0
+                    val setsBadge =
+                        if (uiState.currentExercise != null && currentExSetsCount > 0) " (${currentExSetsCount}✓)" else ""
                     ParticipantTurnChip(
                         name = "${member.name}$setsBadge" + if (isTurn) " • دوره الآن" else "",
                         character = member.name.take(1),
@@ -342,8 +348,25 @@ fun ActiveSessionScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                         ) {
-                            Text("🏋️", fontSize = 52.sp)
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(160.dp)
+                                    .clip(RoundedCornerShape(28.dp))
+                                    .border(
+                                        width = 2.dp,
+                                        color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
+                                        shape = RoundedCornerShape(28.dp),
+                                    ),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.img_category_other),
+                                    contentDescription = "تمارين اليوم",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(20.dp))
                             Text(
                                 text = "اختر تمارين اليوم لتبدأوا",
                                 style = MaterialTheme.typography.titleLarge,
@@ -398,20 +421,45 @@ fun ActiveSessionScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
-                                            Text(
-                                                text = ex.workoutExercise.exerciseNameSnapshot,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                            )
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                text = if (setsCount > 0) "$completedSets جولات مسجلة" else "اضغط للبدء وتسجيل الجولات",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = if (setsCount > 0) (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                fontWeight = FontWeight.Medium,
-                                            )
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(60.dp)
+                                                    .clip(RoundedCornerShape(14.dp))
+                                                    .border(
+                                                        1.dp,
+                                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+                                                        RoundedCornerShape(14.dp)
+                                                    ),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                Image(
+                                                    painter = painterResource(id = getExerciseCategoryDrawable(ex.catalogExercise.category)),
+                                                    contentDescription = ex.workoutExercise.exerciseNameSnapshot,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize(),
+                                                )
+                                            }
+
+                                            Column(horizontalAlignment = Alignment.Start) {
+                                                Text(
+                                                    text = ex.workoutExercise.exerciseNameSnapshot,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                )
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Text(
+                                                    text = if (setsCount > 0) "$completedSets جولات مسجلة" else "اضغط للبدء وتسجيل الجولات",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = if (setsCount > 0) (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    fontWeight = FontWeight.Medium,
+                                                )
+                                            }
                                         }
 
                                         // Delete exercise from session button
@@ -435,14 +483,15 @@ fun ActiveSessionScreen(
                                     ) {
                                         // Participant avatars who played in this exercise
                                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            uiState.participants.filter { it.id in participantIdsWithSets }.forEach { m ->
-                                                ParticipantAvatarBox(
-                                                    character = m.name.take(1),
-                                                    backgroundColor = parseMemberColor(m.colorHex),
-                                                    size = 28.dp,
-                                                    fontSize = 14,
-                                                )
-                                            }
+                                            uiState.participants.filter { it.id in participantIdsWithSets }
+                                                .forEach { m ->
+                                                    ParticipantAvatarBox(
+                                                        character = m.name.take(1),
+                                                        backgroundColor = parseMemberColor(m.colorHex),
+                                                        size = 28.dp,
+                                                        fontSize = 14,
+                                                    )
+                                                }
                                         }
 
                                         Row(
@@ -469,19 +518,20 @@ fun ActiveSessionScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                if (!uiState.isWorkoutStarted && exercisesList.isNotEmpty()) {
-                    AzmPrimaryButton(
-                        text = "🚀 بدء التمرين الأول وتشغيل التايمر",
-                        onClick = { onStartWorkout() },
-                    )
-                } else {
-                    // Bottom Session Finalize Button
-                    AzmPrimaryButton(
-                        text = "إنهاء التمرين وحفظ النتائج ✓",
-                        onClick = { showFinishDialog = true },
-                    )
+                if (exercisesList.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    if (!uiState.isWorkoutStarted) {
+                        AzmPrimaryButton(
+                            text = "🚀 بدء التمرين الأول وتشغيل التايمر",
+                            onClick = { onStartWorkout() },
+                        )
+                    } else {
+                        // Bottom Session Finalize Button
+                        AzmPrimaryButton(
+                            text = "إنهاء التمرين وحفظ النتائج ✓",
+                            onClick = { showFinishDialog = true },
+                        )
+                    }
                 }
             } else {
                 // ══════════════════════════════════════════════════════════════════════
@@ -545,10 +595,19 @@ fun ActiveSessionScreen(
                         modifier = Modifier
                             .size(width = 80.dp, height = 60.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                RoundedCornerShape(14.dp)
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("🏋️", fontSize = 28.sp)
+                        Image(
+                            painter = painterResource(id = getExerciseCategoryDrawable(currentExercise.catalogExercise.category)),
+                            contentDescription = currentExercise.workoutExercise.exerciseNameSnapshot,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
                     }
                 }
 
@@ -584,7 +643,8 @@ fun ActiveSessionScreen(
 
                     // Currently active pending set
                     item {
-                        val weightDisplay = if (uiState.weightStepper > 0f) "${uiState.weightStepper} كغ" else "وزن الجسم"
+                        val weightDisplay =
+                            if (uiState.weightStepper > 0f) "${uiState.weightStepper} كغ" else "وزن الجسم"
                         SetQueueRow(
                             title = currentTurnTitle,
                             stats = "$weightDisplay × ${uiState.repsStepper}",
@@ -630,8 +690,16 @@ fun ActiveSessionScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(text = stringResource(R.string.stepper_weight_label), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                        Text(text = "±2.5 كغ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = stringResource(R.string.stepper_weight_label),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "±2.5 كغ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     StepperControl(
@@ -646,8 +714,16 @@ fun ActiveSessionScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(text = stringResource(R.string.stepper_reps_label), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                        Text(text = "±1 تكرار", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = stringResource(R.string.stepper_reps_label),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "±1 تكرار",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     StepperControl(
@@ -685,8 +761,10 @@ fun ActiveSessionScreen(
 
                     // Navigation buttons
                     val allExercises = uiState.sessionWithDetails?.exercises ?: emptyList()
-                    val currentExIndex = allExercises.indexOfFirst { it.workoutExercise.id == currentExercise.workoutExercise.id }
-                    val nextEx = if (currentExIndex in 0 until allExercises.lastIndex) allExercises[currentExIndex + 1] else null
+                    val currentExIndex =
+                        allExercises.indexOfFirst { it.workoutExercise.id == currentExercise.workoutExercise.id }
+                    val nextEx =
+                        if (currentExIndex in 0 until allExercises.lastIndex) allExercises[currentExIndex + 1] else null
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -883,8 +961,10 @@ private fun ParticipantTurnChip(
 ) {
     val isDark = LocalThemeIsDark.current
     val bg = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-    val border = if (isActive) (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.outline
-    val textColor = if (isActive) (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.onSurface
+    val border =
+        if (isActive) (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.outline
+    val textColor =
+        if (isActive) (if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary) else MaterialTheme.colorScheme.onSurface
 
     Row(
         modifier = Modifier

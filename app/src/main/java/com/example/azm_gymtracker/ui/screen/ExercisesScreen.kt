@@ -1,5 +1,6 @@
 package com.example.azm_gymtracker.ui.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +34,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.azm_gymtracker.ui.util.toDrawableRes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -474,17 +478,19 @@ private fun ExerciseCardItem(
             }
         }
 
-        // End side / Left in RTL: Exercise thumbnail box
+        // End side / Left in RTL: Exercise category photo thumbnail
         Box(
             modifier = Modifier
                 .size(72.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "🏋️",
-                fontSize = 32.sp,
+            Image(
+                painter = painterResource(id = exercise.category.toDrawableRes()),
+                contentDescription = exercise.nameAr,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }

@@ -44,9 +44,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -296,49 +298,199 @@ fun HistoryScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        exercises.forEach { exWithSets ->
+                        exercises.forEachIndexed { exIndex, exWithSets ->
                             val exName = exWithSets.catalogExercise.nameAr.ifBlank {
                                 exWithSets.workoutExercise.exerciseNameSnapshot
                             }
+                            val exNameEn = exWithSets.catalogExercise.nameEn
 
-                            Text(
-                                text = exName,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.align(Alignment.Start),
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Table Column Headings (المشارك | الجولة | كجم | التكرارات)
+                            // Exercise Header
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text("المشارك", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                                Text("الجولة", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                                Text("كجم", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                                Text("التكرارات", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = exName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    if (exNameEn.isNotBlank()) {
+                                        Text(
+                                            text = exNameEn,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                                ) {
+                                    Text(
+                                        text = "${exWithSets.sets.size} جولات",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 11.sp,
+                                        color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
                             }
 
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                            exWithSets.sets.forEach { set ->
-                                val pName = participants.firstOrNull { it.id == set.memberId }?.name ?: ""
-                                val kgStr = if (set.weightKg != null) {
-                                    if (set.weightKg % 1f == 0f) "${set.weightKg.toInt()}" else "${set.weightKg}"
-                                } else "-"
+                            // Group sets per participant
+                            val setsByMember = exWithSets.sets.groupBy { it.memberId }
 
-                                SavedRoundRow(
-                                    participant = pName,
-                                    round = "${set.setNumber}",
-                                    kg = kgStr,
-                                    reps = "${set.reps}",
+                            setsByMember.forEach { (memberId, memberSets) ->
+                                val participant = participants.firstOrNull { it.id == memberId }
+                                val pName = participant?.name ?: "مشارك"
+                                val pColor = try {
+                                    Color(android.graphics.Color.parseColor(participant?.colorHex ?: "#3FE779"))
+                                } catch (_: Exception) {
+                                    if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary
+                                }
+
+                                // Participant Header with avatar & name & volume
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 10.dp, bottom = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    ParticipantAvatarBox(
+                                        character = pName.take(1),
+                                        backgroundColor = pColor,
+                                        size = 26.dp,
+                                        fontSize = 13,
+                                    )
+                                    Text(
+                                        text = pName,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    val memberVol = memberSets.sumOf { ((it.weightKg ?: 0f) * it.reps).toDouble() }
+                                    if (memberVol > 0) {
+                                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                            Text(
+                                                text = String.format(Locale.US, "%,.0f kg", memberVol),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Medium,
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Centered Table Headers: [الجولة | كجم | التكرارات]
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "الجولة",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Text(
+                                        text = "كجم",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Text(
+                                        text = "التكرارات",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(2.dp))
+
+                                // Centered Table Rows with Old Clean Pill Style
+                                memberSets.sortedBy { it.setNumber }.forEachIndexed { sIndex, set ->
+                                    val kgStr = if (set.weightKg != null) {
+                                        if (set.weightKg % 1f == 0f) "${set.weightKg.toInt()}" else "${set.weightKg}"
+                                    } else "-"
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        // Set Number: starts sequentially from 1 for each participant
+                                        Text(
+                                            text = "${sIndex + 1}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.weight(1f),
+                                        )
+
+                                        // Weight (kg) with LTR isolation
+                                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                            Text(
+                                                text = kgStr,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isDark) AzmEmeraldGreen else MaterialTheme.colorScheme.primary,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.weight(1f),
+                                            )
+                                        }
+
+                                        // Reps with LTR isolation
+                                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                            Text(
+                                                text = "${set.reps}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.weight(1f),
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+                            }
+
+                            // Divider line between exercises
+                            if (exIndex < exercises.size - 1) {
+                                Spacer(modifier = Modifier.height(14.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
                                 )
+                                Spacer(modifier = Modifier.height(14.dp))
+                            } else {
+                                Spacer(modifier = Modifier.height(12.dp))
                             }
-
-                            Spacer(modifier = Modifier.height(12.dp))
                         }
 
                         // Delete Session Action Row
@@ -483,13 +635,13 @@ private fun SavedRoundRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(participant, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-        Text(round, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Text(participant, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Text(round, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Text(kg, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            Text(kg, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         }
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Text(reps, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            Text(reps, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         }
     }
     Spacer(modifier = Modifier.height(4.dp))

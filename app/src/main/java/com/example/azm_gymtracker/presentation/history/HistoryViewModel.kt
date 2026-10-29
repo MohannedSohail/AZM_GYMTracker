@@ -121,6 +121,15 @@ class HistoryViewModel(
     }
 
     /**
+     * Expands a specific workout session card (e.g. when navigated from dashboard).
+     */
+    fun expandSession(sessionId: Long) {
+        _expandedSessionIds.update { current ->
+            (current ?: emptySet()) + sessionId
+        }
+    }
+
+    /**
      * Selects a session for detailed inspection, or null to close detail view.
      */
     fun selectSession(session: WorkoutSession?) {

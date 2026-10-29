@@ -190,7 +190,14 @@ fun AppNavHost(
                     navController.navigate(NavRoutes.ActiveSession.route)
                 },
                 onSelectRecentSession = { session ->
-                    navController.navigate(NavRoutes.WorkoutSummary.createRoute(session.id))
+                    historyViewModel.expandSession(session.id)
+                    navController.navigate(NavRoutes.History.route) {
+                        popUpTo(NavRoutes.Dashboard.route) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 },
                 onTabSelected = navigateToTab,
             )

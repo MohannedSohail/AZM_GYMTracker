@@ -1,5 +1,7 @@
 package com.example.azm_gymtracker.ui.screen
 
+import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -7,9 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,14 +43,22 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.azm_gymtracker.ui.util.toDrawableRes
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -120,11 +133,34 @@ fun ExercisePickerSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         modifier = modifier.fillMaxHeight(0.9f),
     ) {
+        val view = LocalView.current
+        val surfaceColor = MaterialTheme.colorScheme.surface.toArgb()
+        DisposableEffect(view, isDark, surfaceColor) {
+            var parent = view.parent
+            while (parent != null) {
+                if (parent is DialogWindowProvider) {
+                    val dialogWindow = parent.window
+                    dialogWindow.navigationBarColor = surfaceColor
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        dialogWindow.isNavigationBarContrastEnforced = false
+                    }
+                    WindowCompat.setDecorFitsSystemWindows(dialogWindow, false)
+                    val insetsController = WindowCompat.getInsetsController(dialogWindow, view)
+                    insetsController.isAppearanceLightNavigationBars = !isDark
+                    break
+                }
+                parent = parent.parent
+            }
+            onDispose {}
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(horizontal = 20.dp),
         ) {
             // Header
@@ -262,13 +298,13 @@ fun ExercisePickerSheet(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(68.dp)
+                                .height(82.dp)
                                 .azmPhysicsItemEntrance(index = index)
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(18.dp))
                                 .border(
                                     width = if (isSelected) 1.5.dp else 1.dp,
                                     color = if (isSelected) itemAccent else MaterialTheme.colorScheme.outline,
-                                    shape = RoundedCornerShape(16.dp),
+                                    shape = RoundedCornerShape(18.dp),
                                 )
                                 .azmPhysicsPress(pressedScale = 0.96f) {
                                     if (isSelected) {
@@ -285,7 +321,7 @@ fun ExercisePickerSheet(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .fillMaxHeight()
-                                    .padding(horizontal = 16.dp),
+                                    .padding(horizontal = 14.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -298,7 +334,7 @@ fun ExercisePickerSheet(
                                         imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                                         contentDescription = null,
                                         tint = if (isSelected) itemAccent else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(22.dp),
+                                        modifier = Modifier.size(24.dp),
                                     )
                                     Column {
                                         Text(
@@ -317,7 +353,7 @@ fun ExercisePickerSheet(
 
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
                                     if (exercise.isCustom) {
                                         Box(
@@ -335,12 +371,21 @@ fun ExercisePickerSheet(
                                         }
                                     }
 
-                                    Text(
-                                        text = categoryDisplayName(exercise.category),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
+                                    // Category photo thumbnail (enlarged clearly to 64dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), RoundedCornerShape(14.dp)),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = exercise.category.toDrawableRes()),
+                                            contentDescription = exercise.nameAr,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -371,9 +416,9 @@ fun ExercisePickerSheet(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            // Margin from top for the sticky bottom multi-select confirmation button
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Sticky Bottom Multi-Select Confirmation Button
             AzmPrimaryButton(
                 text = if (selectedExercises.isEmpty()) {
                     "حدد التمارين التي ترغب بإضافتها للجلسة"
@@ -386,10 +431,10 @@ fun ExercisePickerSheet(
                         onDismiss()
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                modifier = Modifier.fillMaxWidth(),
             )
+
+            Spacer(modifier = Modifier.height(14.dp))
         }
     }
 
