@@ -2,8 +2,11 @@ package com.example.azm_gymtracker.ui.animation
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -19,29 +22,32 @@ import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 
 /**
- * Physics-based spring specs for AZM (عزم)
+ * Ultra-smooth, non-bouncy animation specs for AZM (عزم)
  */
 object AzmPhysicsSpecs {
-    val Bouncy = spring<Float>(
-        dampingRatio = Spring.DampingRatioMediumBouncy,
-        stiffness = Spring.StiffnessLow,
+    val SmoothRelease = spring<Float>(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessMedium,
     )
-    val Snappy = spring<Float>(
-        dampingRatio = Spring.DampingRatioLowBouncy,
-        stiffness = Spring.StiffnessMediumLow,
+    val SnappyPress = spring<Float>(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessHigh,
     )
     val Subtle = spring<Float>(
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness = Spring.StiffnessMedium,
     )
+    // Backward compatibility aliases
+    val Bouncy = SmoothRelease
+    val Snappy = SnappyPress
 }
 
 /**
- * Tactile physics-based spring press effect:
- * Compresses slightly on press, springs back with bouncy physics on release.
+ * Tactile smooth press effect:
+ * Compresses slightly on press, returns cleanly with zero bouncing on release.
  */
 fun Modifier.azmPhysicsPress(
-    pressedScale: Float = 0.95f,
+    pressedScale: Float = 0.96f,
     onClick: (() -> Unit)? = null,
 ): Modifier = composed {
     val interactionSource = remember { MutableInteractionSource() }
@@ -52,12 +58,12 @@ fun Modifier.azmPhysicsPress(
         if (isPressed) {
             scaleAnim.animateTo(
                 targetValue = pressedScale,
-                animationSpec = AzmPhysicsSpecs.Snappy,
+                animationSpec = AzmPhysicsSpecs.SnappyPress,
             )
         } else {
             scaleAnim.animateTo(
                 targetValue = 1f,
-                animationSpec = AzmPhysicsSpecs.Bouncy,
+                animationSpec = AzmPhysicsSpecs.SmoothRelease,
             )
         }
     }
@@ -78,12 +84,12 @@ fun Modifier.azmPhysicsPress(
 }
 
 /**
- * Physics-based staggered entrance animation for list items:
- * Staggers in with translationY, bouncy scaling, and smooth alpha fade.
+ * Silky staggered entrance animation for list items:
+ * Glides in gently with subtle translationY, scale, and smooth alpha fade without bouncing.
  */
 fun Modifier.azmPhysicsItemEntrance(
     index: Int = 0,
-    delayPerIndexMs: Long = 35L,
+    delayPerIndexMs: Long = 25L,
     maxStaggerIndex: Int = 8,
 ): Modifier = composed {
     val effectiveIndex = index.coerceAtMost(maxStaggerIndex)
@@ -95,9 +101,9 @@ fun Modifier.azmPhysicsItemEntrance(
         }
         animProgress.animateTo(
             targetValue = 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow,
+            animationSpec = tween(
+                durationMillis = 280,
+                easing = FastOutSlowInEasing,
             ),
         )
     }
@@ -105,9 +111,9 @@ fun Modifier.azmPhysicsItemEntrance(
     val progress = animProgress.value
     this
         .graphicsLayer {
-            translationY = (1f - progress) * 60f
-            scaleX = 0.88f + (0.12f * progress)
-            scaleY = 0.88f + (0.12f * progress)
+            translationY = (1f - progress) * 20f
+            scaleX = 0.96f + (0.04f * progress)
+            scaleY = 0.96f + (0.04f * progress)
             alpha = progress.coerceIn(0f, 1f)
         }
 }

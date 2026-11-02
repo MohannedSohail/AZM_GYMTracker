@@ -1,6 +1,7 @@
 package com.example.azm_gymtracker.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -73,8 +74,9 @@ fun AppNavHost(
         }
     }
 
-    // Smooth navigation specs based on Figma motion guidelines (280ms)
-    val animationDuration = 280
+    // Ultra-smooth, non-bouncy navigation transitions (Material 3 Emphasized Decelerate)
+    val animationDuration = 320
+    val smoothEasing = CubicBezierEasing(0.2f, 0.0f, 0f, 1.0f)
 
     NavHost(
         navController = navController,
@@ -83,35 +85,37 @@ fun AppNavHost(
         enterTransition = {
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(animationDuration, easing = FastOutSlowInEasing),
-            ) + fadeIn(animationSpec = tween(animationDuration))
+                animationSpec = tween(animationDuration, easing = smoothEasing),
+                initialOffset = { it / 5 },
+            ) + fadeIn(animationSpec = tween(animationDuration, easing = smoothEasing))
         },
         exitTransition = {
             slideOutOfContainer(
                 AnimatedContentTransitionScope.SlideDirection.Start,
-                animationSpec = tween(animationDuration, easing = FastOutSlowInEasing),
-                targetOffset = { it / 3 },
-            ) + fadeOut(animationSpec = tween(animationDuration))
+                animationSpec = tween(animationDuration, easing = smoothEasing),
+                targetOffset = { -it / 5 },
+            ) + fadeOut(animationSpec = tween(animationDuration / 2, easing = FastOutSlowInEasing))
         },
         popEnterTransition = {
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(animationDuration, easing = FastOutSlowInEasing),
-                initialOffset = { -it / 3 },
-            ) + fadeIn(animationSpec = tween(animationDuration))
+                animationSpec = tween(animationDuration, easing = smoothEasing),
+                initialOffset = { -it / 5 },
+            ) + fadeIn(animationSpec = tween(animationDuration, easing = smoothEasing))
         },
         popExitTransition = {
             slideOutOfContainer(
                 AnimatedContentTransitionScope.SlideDirection.End,
-                animationSpec = tween(animationDuration, easing = FastOutSlowInEasing),
-            ) + fadeOut(animationSpec = tween(animationDuration))
+                animationSpec = tween(animationDuration, easing = smoothEasing),
+                targetOffset = { it / 5 },
+            ) + fadeOut(animationSpec = tween(animationDuration / 2, easing = FastOutSlowInEasing))
         },
     ) {
         // Splash Screen
         composable(
             route = NavRoutes.Splash.route,
             exitTransition = {
-                fadeOut(animationSpec = tween(350)) + scaleOut(targetScale = 1.05f)
+                fadeOut(animationSpec = tween(320, easing = FastOutSlowInEasing))
             },
         ) {
             SplashScreen(
@@ -131,7 +135,7 @@ fun AppNavHost(
         // Onboarding Screen
         composable(
             route = NavRoutes.Onboarding.route,
-            enterTransition = { fadeIn(animationSpec = tween(300)) + scaleIn(initialScale = 0.95f) },
+            enterTransition = { fadeIn(animationSpec = tween(320, easing = FastOutSlowInEasing)) },
         ) {
             OnboardingScreen(
                 nameError = memberState.nameError,

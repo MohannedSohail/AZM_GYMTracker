@@ -7,9 +7,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.unit.IntOffset
 import com.example.azm_gymtracker.ui.animation.azmPhysicsPress
@@ -180,16 +181,21 @@ fun OnboardingScreen(
             AnimatedContent(
                 targetState = currentStep,
                 transitionSpec = {
-                    val springSpec = spring<IntOffset>(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessLow,
+                    val slideEasing = CubicBezierEasing(0.2f, 0.0f, 0f, 1.0f)
+                    val slideSpec = tween<IntOffset>(
+                        durationMillis = 340,
+                        easing = slideEasing,
+                    )
+                    val fadeSpec = tween<Float>(
+                        durationMillis = 260,
+                        easing = FastOutSlowInEasing,
                     )
                     if (targetState > initialState) {
-                        slideInHorizontally(animationSpec = springSpec) { width -> -width } + fadeIn() togetherWith
-                            slideOutHorizontally(animationSpec = springSpec) { width -> width } + fadeOut()
+                        slideInHorizontally(animationSpec = slideSpec) { width -> -width } + fadeIn(animationSpec = fadeSpec) togetherWith
+                            slideOutHorizontally(animationSpec = slideSpec) { width -> width } + fadeOut(animationSpec = fadeSpec)
                     } else {
-                        slideInHorizontally(animationSpec = springSpec) { width -> width } + fadeIn() togetherWith
-                            slideOutHorizontally(animationSpec = springSpec) { width -> -width } + fadeOut()
+                        slideInHorizontally(animationSpec = slideSpec) { width -> width } + fadeIn(animationSpec = fadeSpec) togetherWith
+                            slideOutHorizontally(animationSpec = slideSpec) { width -> -width } + fadeOut(animationSpec = fadeSpec)
                     }
                 },
                 label = "onboardingPager",
@@ -403,15 +409,18 @@ fun OnboardingScreen(
                             val isActive = currentStep == index
                             val dotWidth by animateDpAsState(
                                 targetValue = if (isActive) 28.dp else 8.dp,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow,
+                                animationSpec = tween(
+                                    durationMillis = 280,
+                                    easing = FastOutSlowInEasing,
                                 ),
                                 label = "dotWidth_$index",
                             )
                             val dotColor by animateColorAsState(
                                 targetValue = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                animationSpec = spring(stiffness = Spring.StiffnessLow),
+                                animationSpec = tween(
+                                    durationMillis = 280,
+                                    easing = FastOutSlowInEasing,
+                                ),
                                 label = "dotColor_$index",
                             )
                             Box(

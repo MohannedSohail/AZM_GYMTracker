@@ -99,13 +99,13 @@ fun SplashScreen(
     )
 
     LaunchedEffect(Unit) {
-        // Step 1: Logo spring entrance & background glow
+        // Step 1: Logo smooth entrance & background glow
         launch {
             logoScale.animateTo(
                 targetValue = 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow,
+                animationSpec = tween(
+                    durationMillis = 650,
+                    easing = FastOutSlowInEasing,
                 ),
             )
         }
