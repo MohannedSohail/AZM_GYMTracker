@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "historyId": "d295e389-e404-43e9-957c-17fedf24f128",
+  "currentRevision": "db920067-5e2c-4149-9d6d-4ec320bef8ec",
+  "pendingChanges": false,
+  "files": {
+    "AGENTS.md": {
+      "hash": "26e43c63a41e1ba38ba287bea1af2795c55ba2e3787d3a635c062c3a8a9818f4",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\26\\26e43c63a41e1ba38ba287bea1af2795c55ba2e3787d3a635c062c3a8a9818f4"
+    },
+    "CLAUDE.md": {
+      "hash": "26e43c63a41e1ba38ba287bea1af2795c55ba2e3787d3a635c062c3a8a9818f4",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\26\\26e43c63a41e1ba38ba287bea1af2795c55ba2e3787d3a635c062c3a8a9818f4"
+    },
+    "assets/img/azm_logo_full.png": {
+      "hash": "de4af3620ac4335a4b9acc47b7f9a11e8aeaa444564530009c43dfe374dd281e",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\de\\de4af3620ac4335a4b9acc47b7f9a11e8aeaa444564530009c43dfe374dd281e"
+    },
+    "assets/img/logo.png": {
+      "hash": "7cfbf18da17dd456dea2cef4fe092955c010f632c91181ff0e90a30609f66c5b",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\7c\\7cfbf18da17dd456dea2cef4fe092955c010f632c91181ff0e90a30609f66c5b"
+    },
+    "assets/sfx/bong_001.ogg": {
+      "hash": "d21d0f0b782445db579d11e2506b24cd1ac9d664ee33aeaf807761aa7b6fd710",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\d2\\d21d0f0b782445db579d11e2506b24cd1ac9d664ee33aeaf807761aa7b6fd710"
+    },
+    "assets/sfx/click_001.ogg": {
+      "hash": "ccfb7fa0cccdd9faec0eb16033c732b1e308d139d80f799161495d58f7adcdb9",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\cc\\ccfb7fa0cccdd9faec0eb16033c732b1e308d139d80f799161495d58f7adcdb9"
+    },
+    "assets/sfx/drop_001.ogg": {
+      "hash": "692ee3a6f1821402ca649ff735bee9591dc4846c8098fc7d6a90fd15fa57c1af",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\69\\692ee3a6f1821402ca649ff735bee9591dc4846c8098fc7d6a90fd15fa57c1af"
+    },
+    "assets/sfx/select_008.ogg": {
+      "hash": "f703b6b1c62dae1c246a46d5c2442802588f68be2df4d17e0d65cf7e0dbfc826",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\f7\\f703b6b1c62dae1c246a46d5c2442802588f68be2df4d17e0d65cf7e0dbfc826"
+    },
+    "hyperframes.json": {
+      "hash": "53dbce1e19aa713cbb12ee0bc4d206143b45ab15e6ffbfcaa8f69572d4d24d50",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\53\\53dbce1e19aa713cbb12ee0bc4d206143b45ab15e6ffbfcaa8f69572d4d24d50"
+    },
+    "index.html": {
+      "hash": "0385a74713ad85c7526abf12d95df7d9981b208a6b8fb066f534d75a6fd9f4a8",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\03\\0385a74713ad85c7526abf12d95df7d9981b208a6b8fb066f534d75a6fd9f4a8"
+    },
+    "meta.json": {
+      "hash": "41244181c8ae919b175a2d177c2cf9fef369fd9e56833d42aef753ba7a68b728",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\41\\41244181c8ae919b175a2d177c2cf9fef369fd9e56833d42aef753ba7a68b728"
+    },
+    "package.json": {
+      "hash": "98f14d3bc6a67095f399a0f51c002fa59bde0f1f9f24385a2edde6b62916e1b0",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\98\\98f14d3bc6a67095f399a0f51c002fa59bde0f1f9f24385a2edde6b62916e1b0"
+    },
+    "assets/music/track.mp3": {
+      "hash": "5888d4bd2ba0119b87a94e502ae2cc401c08192945cc5e5c2f8e8a33aa47a0a1",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\58\\5888d4bd2ba0119b87a94e502ae2cc401c08192945cc5e5c2f8e8a33aa47a0a1"
+    },
+    "assets/img/img_category_back.jpg": {
+      "hash": "64595739e4d974102a0655a5051049ce30417641d95308f5383a844009e632e9",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\64\\64595739e4d974102a0655a5051049ce30417641d95308f5383a844009e632e9"
+    },
+    "assets/img/img_category_chest.jpg": {
+      "hash": "53106634c6b03de4c31abe00919d60fb88195c00f596b5a5591358162ad3b137",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\53\\53106634c6b03de4c31abe00919d60fb88195c00f596b5a5591358162ad3b137"
+    },
+    "assets/img/img_onboarding_1.jpg": {
+      "hash": "acd93c77f0d8bb19384e5db101549493165ae3c9541f68122482216144b4d3e1",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\ac\\acd93c77f0d8bb19384e5db101549493165ae3c9541f68122482216144b4d3e1"
+    },
+    "assets/img/img_onboarding_2.jpg": {
+      "hash": "19df32132f9502314aa475c80c8733edab03e6727e1ee411f839dd3c07a67023",
+      "content": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\19\\19df32132f9502314aa475c80c8733edab03e6727e1ee411f839dd3c07a67023"
+    }
+  },
+  "revisions": {
+    "34725306-c4b5-4901-add5-9aa37a8f4efb": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793624426313,
+      "endedAt": 1793624426316,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\29\\294f5056d043596d4ea54528acdcf9df9078b1b0e8e65f18de505875093a3f69",
+          "after": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\e4\\e4722e4cade1a6df6f7ea9cba8b8bc6e88db937c458bb445d025cfb157c1ea0f"
+        }
+      }
+    },
+    "5964e222-0114-4dc5-88b9-c1d9a3b69a0d": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793625859368,
+      "endedAt": 1793625859477,
+      "files": {
+        "assets/img/img_category_back.jpg": {
+          "before": null,
+          "after": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\64\\64595739e4d974102a0655a5051049ce30417641d95308f5383a844009e632e9"
+        },
+        "assets/img/img_category_chest.jpg": {
+          "before": null,
+          "after": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\53\\53106634c6b03de4c31abe00919d60fb88195c00f596b5a5591358162ad3b137"
+        },
+        "assets/img/img_onboarding_1.jpg": {
+          "before": null,
+          "after": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\ac\\acd93c77f0d8bb19384e5db101549493165ae3c9541f68122482216144b4d3e1"
+        },
+        "assets/img/img_onboarding_2.jpg": {
+          "before": null,
+          "after": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\19\\19df32132f9502314aa475c80c8733edab03e6727e1ee411f839dd3c07a67023"
+        },
+        "index.html": {
+          "before": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\e4\\e4722e4cade1a6df6f7ea9cba8b8bc6e88db937c458bb445d025cfb157c1ea0f",
+          "after": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\6e\\6e291cb9f8c9ba1c7cd42102bd5b4018eba42221170b6a5032fb7d0b01f9a793"
+        }
+      }
+    },
+    "db920067-5e2c-4149-9d6d-4ec320bef8ec": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793625917273,
+      "endedAt": 1793625917275,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\6e\\6e291cb9f8c9ba1c7cd42102bd5b4018eba42221170b6a5032fb7d0b01f9a793",
+          "after": "C:\\Users\\MOHANNED\\.cache\\hyperframes\\history\\d295e389-e404-43e9-957c-17fedf24f128\\blobs\\03\\0385a74713ad85c7526abf12d95df7d9981b208a6b8fb066f534d75a6fd9f4a8"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "34725306-c4b5-4901-add5-9aa37a8f4efb",
+      "id": "f26cfbe3-52d0-4312-987f-6ff486306f7f"
+    },
+    "revisions": {
+      "34725306-c4b5-4901-add5-9aa37a8f4efb": [
+        {
+          "id": "f26cfbe3-52d0-4312-987f-6ff486306f7f",
+          "scope": "project",
+          "report": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\.hyperframes\\artifacts\\checks\\f26cfbe3-52d0-4312-987f-6ff486306f7f.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 10000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1793624435504,
+          "contentHash": "d3d1db02c595e5f930eb2ace16a348d1a060894bd46846da89a0a8e2c39feb9b",
+          "revision": "34725306-c4b5-4901-add5-9aa37a8f4efb",
+          "inputFingerprint": "7064227a8f8b713d33117edf7076c5a304a61835ad004d0b7d582c170bfb9680",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "5964e222-0114-4dc5-88b9-c1d9a3b69a0d": [
+        {
+          "id": "480e9e29-0b82-4610-a159-774a077f2072",
+          "scope": "project",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 10000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1793625875240,
+          "contentHash": "c9ae5acb82ea09328e093bd2f143530695c0249dd471821fe02131547bf925e2",
+          "revision": "5964e222-0114-4dc5-88b9-c1d9a3b69a0d",
+          "inputFingerprint": "a0b9d610650cf203ddc9c1f700d66864d928a376b1ea423ec6d19b067e422b6b",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "68a811e8-5d6a-4e78-b88f-2da6c2b0ce3c"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "8e2860c2-04ba-4e9f-b1b5-ce49339efd33",
+        "scope": "project",
+        "report": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\.hyperframes\\artifacts\\checks\\8e2860c2-04ba-4e9f-b1b5-ce49339efd33.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": true,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 10000,
+            "contrast": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto"
+          }
+        },
+        "createdAt": 1793624351566,
+        "contentHash": "8566dfad657ad7d3912e1ab2c59a217a21d6bfb8e5a0ee8c91e33d3821d437bf",
+        "revision": null,
+        "inputFingerprint": "2340e7f21894f5beb82a36c85d6914132717fcb725ad3e25e22b72b5d05dca36",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "renders": {
+    "latest": {
+      "id": "68a811e8-5d6a-4e78-b88f-2da6c2b0ce3c",
+      "completedAt": 1793626031245,
+      "output": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\brag.mp4",
+      "status": "completed",
+      "revision": "db920067-5e2c-4149-9d6d-4ec320bef8ec"
+    },
+    "retainedRevisions": [
+      "db920067-5e2c-4149-9d6d-4ec320bef8ec",
+      "34725306-c4b5-4901-add5-9aa37a8f4efb"
+    ]
+  },
+  "pendingArtifactCleanup": []
+}

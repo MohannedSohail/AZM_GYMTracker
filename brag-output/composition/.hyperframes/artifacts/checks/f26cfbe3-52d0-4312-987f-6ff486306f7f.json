@@ -1,0 +1,492 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 6,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 5 has 5 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into separate .html files under compositions/ and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene1\"> is a timeline element that contains nested <div id=\"scene1-inner\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene1",
+        "dataAttributes": {},
+        "sourceFile": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene1\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene2\"> is a timeline element that contains nested <div id=\"scene2-inner\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene2",
+        "dataAttributes": {},
+        "sourceFile": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene2\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene3\"> is a timeline element that contains nested <div id=\"scene3-inner\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene3",
+        "dataAttributes": {},
+        "sourceFile": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene3\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene4\"> is a timeline element that contains nested <div id=\"scene4-inner\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene4",
+        "dataAttributes": {},
+        "sourceFile": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene4\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"scene5\"> is a timeline element that contains nested <div id=\"scene5-inner\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene5",
+        "dataAttributes": {},
+        "sourceFile": "E:\\AI Projects\\AZM_GYMTracker\\brag-output\\composition\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"scene5\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 4,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-click1\" is 0.10s but its slot (data-duration) is 0.40s — the slot is shortened to the media length when rendered. Set data-duration to ~0.10s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "21",
+          "data-width": "1920",
+          "data-height": "1080"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-click2\" is 0.10s but its slot (data-duration) is 0.40s — the slot is shortened to the media length when rendered. Set data-duration to ~0.10s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "21",
+          "data-width": "1920",
+          "data-height": "1080"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-done\" is 0.05s but its slot (data-duration) is 0.60s — the slot is shortened to the media length when rendered. Set data-duration to ~0.05s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "21",
+          "data-width": "1920",
+          "data-height": "1080"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-drop\" is 0.11s but its slot (data-duration) is 1.00s — the slot is shortened to the media length when rendered. Set data-duration to ~0.11s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "21",
+          "data-width": "1920",
+          "data-height": "1080"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 0
+      }
+    ]
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "duration": 21,
+    "samples": [
+      1.167,
+      3.5,
+      5.833,
+      8.167,
+      10.5,
+      12.833,
+      15.167,
+      17.5,
+      19.833
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 0,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      1.167,
+      5.833,
+      10.5,
+      15.167,
+      19.833
+    ],
+    "checked": 38,
+    "passed": 38
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 4,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "first_frame_empty",
+        "severity": "warning",
+        "message": "Frame 0 shows only the background, and the first frame is the thumbnail on social players: have the title or key image already on screen at 0 s instead of entering from nothing; see references/review.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0
+      },
+      {
+        "code": "text_below_floor",
+        "severity": "warning",
+        "message": "Type floor is 28 px (2.6% of the 1080 px short side, what a phone can read) and 17 text elements stay under it for 0.5 s or more, the smallest \"مكتملة\" at 18 px: set reading text to at least 28 px, or put data-layout-ignore on text that is texture rather than reading; see references/look.md.",
+        "text": "مكتملة",
+        "selector": "div.summary-stats > div:nth-of-type(1) > p:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1187.44,
+          "y": 787.66,
+          "width": 56.78,
+          "height": 33
+        },
+        "time": 14.375,
+        "times": [
+          0.375,
+          3.5,
+          4.125,
+          4.25,
+          4.75,
+          8.75,
+          8.75,
+          8.75,
+          8.75,
+          13.75,
+          14.375,
+          14.5,
+          14.625,
+          18.5,
+          19,
+          19.125,
+          19.25
+        ],
+        "fontPx": 18,
+        "floorPx": 28,
+        "seconds": 3.125,
+        "elements": [
+          {
+            "selector": "div.summary-stats > div:nth-of-type(1) > p:nth-of-type(1)",
+            "text": "مكتملة",
+            "fontPx": 18,
+            "time": 14.375,
+            "seconds": 3.125
+          },
+          {
+            "selector": "div.summary-stats > div:nth-of-type(2) > p:nth-of-type(1)",
+            "text": "مدة التمرين",
+            "fontPx": 18,
+            "time": 14.5,
+            "seconds": 3
+          },
+          {
+            "selector": "div.summary-stats > div:nth-of-type(3) > p:nth-of-type(1)",
+            "text": "أحمد وعمر",
+            "fontPx": 18,
+            "time": 14.625,
+            "seconds": 2.875
+          },
+          {
+            "selector": "div.exercise-header > div:nth-of-type(2)",
+            "text": "الجولة 2",
+            "fontPx": 19.31,
+            "time": 8.75,
+            "seconds": 4.75
+          },
+          {
+            "selector": "#card-ahmed > div:nth-of-type(2) > p:nth-of-type(1)",
+            "text": "الجولة الحالية • بنش برس",
+            "fontPx": 20,
+            "time": 4.125,
+            "seconds": 4.375
+          },
+          {
+            "selector": "#card-omar > div:nth-of-type(2) > p:nth-of-type(1)",
+            "text": "الدور القادم",
+            "fontPx": 20,
+            "time": 4.25,
+            "seconds": 4.25
+          },
+          {
+            "selector": "div.exercise-sub",
+            "text": "الصدر • بار حديد",
+            "fontPx": 21.24,
+            "time": 8.75,
+            "seconds": 4.75
+          },
+          {
+            "selector": "div.logo-badge",
+            "text": "AZM GYM TRACKER",
+            "fontPx": 22,
+            "time": 18.5,
+            "seconds": 2.5
+          },
+          {
+            "selector": "div.outro-features > div:nth-of-type(1)",
+            "text": "بدون إنترنت (100% Offline)",
+            "fontPx": 22,
+            "time": 19,
+            "seconds": 2
+          },
+          {
+            "selector": "div.outro-features > div:nth-of-type(2)",
+            "text": "بدون حسابات أو اشتراكات",
+            "fontPx": 22,
+            "time": 19.125,
+            "seconds": 1.875
+          },
+          {
+            "selector": "div.outro-features > div:nth-of-type(3)",
+            "text": "أرغونوميا اليد الواحدة",
+            "fontPx": 22,
+            "time": 19.25,
+            "seconds": 1.75
+          },
+          {
+            "selector": "#scene1-inner > div:nth-of-type(1) > span:nth-of-type(1)",
+            "text": "تطبيق عزم • AZM",
+            "fontPx": 23.64,
+            "time": 0.375,
+            "seconds": 3.125
+          },
+          {
+            "selector": "div.volume-unit",
+            "text": "كيلوغرام إجمالي الحجم",
+            "fontPx": 23.83,
+            "time": 13.75,
+            "seconds": 3.75
+          },
+          {
+            "selector": "#scene2-inner > div:nth-of-type(1) > span:nth-of-type(1)",
+            "text": "تمرين تشاركي بدون فوضى",
+            "fontPx": 24,
+            "time": 3.5,
+            "seconds": 5
+          },
+          {
+            "selector": "div.stepper-card > div:nth-of-type(2) > span:nth-of-type(1)",
+            "text": "الوزن (±2.5 كغ)",
+            "fontPx": 25.11,
+            "time": 8.75,
+            "seconds": 4.75
+          },
+          {
+            "selector": "div.stepper-card > div:nth-of-type(3) > span:nth-of-type(1)",
+            "text": "التكرارات (±1)",
+            "fontPx": 25.11,
+            "time": 8.75,
+            "seconds": 4.75
+          },
+          {
+            "selector": "#turn-pill > span:nth-of-type(1)",
+            "text": "✓ تم تسجيل جولة أحمد — الدور الآن: عمر",
+            "fontPx": 26,
+            "time": 4.75,
+            "seconds": 3.75
+          }
+        ]
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "The film's last line \"بدون حسابات أو اشتراكات\" (4 words) is on screen 1.93 s (±0.01 s), under the 2.00 s a closing line needs: hold it about 0.5 s + 0.3 s a word and at least 2 s before the film ends; see references/motion.md.",
+        "text": "بدون حسابات أو اشتراكات",
+        "selector": "div.outro-features > div:nth-of-type(2)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 820.13,
+          "y": 781.86,
+          "width": 245.04000000000008,
+          "height": 42
+        },
+        "time": 19.07,
+        "words": 4,
+        "seconds": 1.934,
+        "floorSeconds": 2
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "The film's last line \"أرغونوميا اليد الواحدة\" (3 words) is on screen 1.77 s (±0.01 s), under the 2.00 s a closing line needs: hold it about 0.5 s + 0.3 s a word and at least 2 s before the film ends; see references/motion.md.",
+        "text": "أرغونوميا اليد الواحدة",
+        "selector": "div.outro-features > div:nth-of-type(3)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 532.44,
+          "y": 782.89,
+          "width": 209.69000000000005,
+          "height": 42
+        },
+        "time": 19.234,
+        "words": 3,
+        "seconds": 1.77,
+        "floorSeconds": 2
+      }
+    ],
+    "enabled": true,
+    "step": 0.125,
+    "samples": 168
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}
